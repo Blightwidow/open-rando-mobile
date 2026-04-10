@@ -22,9 +22,9 @@ export interface HikeStep {
   elevation_loss_m: number;
 }
 
-export type Difficulty = "easy" | "moderate";
-export type RouteType = "gr";
-export type Terrain = "coastal" | "hills" | "mountain" | "plains";
+export type Difficulty = "easy" | "moderate" | "difficult" | "very_difficult";
+export type RouteType = "gr" | "grp" | "pr";
+export type Terrain = "coastal" | "hills" | "mountain" | "plains" | "forest";
 
 export interface Hike {
   id: string;
