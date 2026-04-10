@@ -29,12 +29,17 @@ Per project philosophy: no analytics, no cookies, no accounts.
 
 **Recommendation**: No crash reporting in v1. Consider opt-in Sentry (self-hostable, open source) in Phase 2 if debugging blind becomes painful.
 
-### 3. Developer Accounts
+### 3. Distribution Strategy
 
-- Apple Developer Program: $99/year (required for TestFlight + App Store)
-- Google Play Developer: $25 one-time
+**Decision**: Target unofficial/alternative stores first (FDroid for Android, sideloading for iOS).
 
-Need to enroll before first TestFlight build.
+**Why**: Avoids Apple Developer Program ($99/year) and Google Play ($25) costs. Aligns with open-source philosophy. FDroid is a natural fit for a GPLv3 privacy-first app with no tracking.
+
+**Implications**:
+- No EAS Build dependency — local builds with `bunx expo run:android` / `bunx expo run:ios`
+- Android APK built locally with Gradle after `bunx expo prebuild`
+- iOS distribution via AltStore or TestFlight later if needed
+- May revisit official stores post-MVP
 
 ### 4. Repository Structure
 
