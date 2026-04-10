@@ -28,10 +28,12 @@ As of 2026-04-10, the initial scaffold is in place. The app builds and runs on i
 - Formatting utilities (`formatDuration`, `formatDistance`, `formatElevation`)
 - `@/` path alias resolving to `src/`
 - Builds and runs on iOS simulator (`bun run ios`)
+- ESLint with eslint-config-expo (flat config) — `bun run lint` passes clean
+- GitHub Actions CI: lint + typecheck on push to main and PRs
 
 ### What is not done yet
 
-- ESLint, Prettier, Vitest setup
+- Prettier, Vitest setup
 - i18n (FR/EN translation dictionary)
 - Filter queries in SQL + filter bottom sheet + search
 - Explore Map view (all trails on a France-wide map)
@@ -53,7 +55,8 @@ As of 2026-04-10, the initial scaffold is in place. The app builds and runs on i
 - [x] Expo Router + bottom tab navigation skeleton
 - [x] Local iOS build working (`bun run ios`)
 - [x] MapLibre config plugin integrated
-- [ ] ESLint, Prettier, Vitest setup
+- [x] ESLint setup with eslint-config-expo + GitHub Actions CI
+- [ ] Prettier, Vitest setup
 - [x] Port TS interfaces from web project
 - [ ] Port i18n dictionary from `../open-rando/website/src/lib/i18n.ts`
 

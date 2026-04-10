@@ -14,7 +14,7 @@
 | Charts | react-native-svg | Port web's SVG elevation chart directly |
 | i18n | Custom (port from web) | Reuse existing FR/EN dictionary; 100+ keys already translated |
 | Testing | Vitest (unit) + React Native Testing Library (components) | Fast, TS-native |
-| CI/CD | EAS Build + EAS Submit via GitHub Actions | Cloud builds; no local Xcode/Android Studio needed |
+| CI | GitHub Actions — lint + typecheck on push/PR to main | Catches errors before merge; no EAS yet |
 
 **Rejected alternatives**: Flutter (Dart learning curve, no type sharing), Capacitor (WebView maps too slow for GPS), native Swift/Kotlin (two codebases for solo dev).
 

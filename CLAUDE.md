@@ -21,7 +21,9 @@ Companion mobile app for open-rando (rando.dammaretz.fr) — offline hiking betw
 - **GPS**: expo-location (not yet implemented)
 - **Charts**: react-native-svg (not yet implemented)
 - **Package manager**: bun (not npm)
+- **Linting**: ESLint with eslint-config-expo (flat config)
 - **Testing**: Vitest (unit) + React Native Testing Library (components) — not yet configured
+- **CI**: GitHub Actions — lint + typecheck on push/PR to main
 - **Builds**: local only (`bunx expo run:ios` / `bunx expo run:android`), no EAS
 
 ## Documentation
@@ -33,7 +35,9 @@ Companion mobile app for open-rando (rando.dammaretz.fr) — offline hiking betw
 
 ## Code Conventions
 
-- TypeScript strict mode — zero errors required (`bunx tsc --noEmit`)
+- TypeScript strict mode — zero errors required (`bun run typecheck`)
+- ESLint must pass — zero warnings/errors (`bun run lint`)
+- CI runs lint + typecheck on every push to main and on PRs
 - No abbreviated variable names — spell everything out
 - Descriptive names even in loops
 - Follow Expo Router file-based routing conventions
@@ -49,8 +53,12 @@ bun start                    # expo start (dev server)
 bun run ios                  # build + run on iOS simulator
 bun run android              # build + run on Android emulator/device
 
+# Linting
+bun run lint                 # run ESLint
+bun run lint --fix           # auto-fix lint errors
+
 # Type checking
-bunx tsc --noEmit
+bun run typecheck            # tsc --noEmit
 
 # Dependencies
 bun install                  # install dependencies
