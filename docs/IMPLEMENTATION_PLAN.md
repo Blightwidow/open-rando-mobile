@@ -2,48 +2,49 @@
 
 ## Current Progress
 
-As of 2026-04-10, the initial scaffold is in place. The app builds and runs on iOS simulator. Type-checks cleanly (`bunx tsc --noEmit` passes with zero errors). Below is the status of each sprint item.
+As of 2026-04-14, weeks 1-6 are complete. The app builds and runs on iOS simulator. Type-checks cleanly (`bunx tsc --noEmit` passes with zero errors). Below is the status of each sprint item.
 
 ### What is done
 
 - Expo SDK 54 project bootstrapped with TypeScript strict mode
 - Expo Router file-based routing with bottom tab navigation (Explore / Saved / Settings)
 - Default landing on Explore tab via `app/index.tsx` redirect
-- TypeScript types ported from the web project (`Hike`, `StationInfo`, `HikeStep`, `ElevationProfile`)
+- TypeScript types ported from the web project (`Route`, `PointOfInterest`, `ElevationProfile`)
 - Catalog sync service: fetches `catalog.json` on launch, compares `generated_at`, upserts into SQLite
-- SQLite database layer: `hikes` table with full JSON `data` column + denormalized columns for filtering
-- TanStack Query hooks wrapping SQLite reads (`useHikes`, `useHike`)
+- SQLite database layer: `routes` table with full JSON `data` column + denormalized columns for filtering
+- TanStack Query hooks wrapping SQLite reads (`useRoutes`, `useRoute`)
 - Hike list screen with `FlatList`, pull-to-refresh catalog sync, loading/error/empty states
-- Hike card component (path ref badge, difficulty badge, stations, distance/duration/elevation stats)
-- Hike detail screen with stats grid, terrain tags, steps timeline
-- Download service: fetches GeoJSON + elevation JSON per hike, writes to `documentDirectory/hikes/{id}/`
-- Zustand download store persisted to AsyncStorage (tracks per-hike download status across app restarts)
+- Route card component (path ref badge, difficulty badge, distance/elevation stats)
+- Route detail screen with stats grid, terrain tags
+- Download service: fetches GeoJSON + elevation JSON per route, writes to `documentDirectory/hikes/{id}/`
+- Zustand download store persisted to AsyncStorage (tracks per-route download status across app restarts)
 - Download button with progress states (idle / downloading / complete / error / retry)
-- MapLibre React Native integration with GeoJSON trail overlay (`ShapeSource` + `LineLayer`) and station markers
-- Trail map appears on hike detail after download completes
-- Saved hikes screen listing downloads with remove/delete functionality
-- Offline hike detail screen reading route data from local files
-- Settings screen with download count and delete-all
+- MapLibre React Native integration with GeoJSON trail overlay (`ShapeSource` + `LineLayer`) and POI markers
+- Trail map appears on route detail after download completes
+- Saved routes screen listing downloads with remove/delete functionality
+- Offline route detail screen reading route data from local files
+- Settings screen with download count, delete-all, and language selector
 - Theme system (colors, spacing, typography, border radius)
-- Formatting utilities (`formatDuration`, `formatDistance`, `formatElevation`)
+- Formatting utilities (`formatDistance`, `formatElevation`)
 - `@/` path alias resolving to `src/`
 - Builds and runs on iOS simulator (`bun run ios`)
 - ESLint with eslint-config-expo (flat config) — `bun run lint` passes clean
-- GitHub Actions CI: lint + typecheck on push to main and PRs
+- Prettier code formatting — `bun run format:check` passes clean
+- Vitest unit tests — `bun run test` passes (format + geo utility tests)
+- GitHub Actions CI: lint + typecheck + format check + tests on push to main and PRs
+- i18n FR/EN with language selector in Settings (ported from web project)
+- Explore Map view with route markers (bbox center, difficulty-colored circles, list/map toggle)
+- Elevation chart component (react-native-svg, area fill, station markers, touch cursor)
 
 ### What is not done yet
 
-- Prettier, Vitest setup
-- i18n (FR/EN translation dictionary)
 - Filter queries in SQL + filter bottom sheet + search
-- Explore Map view (all trails on a France-wide map)
-- Elevation chart component (react-native-svg)
 - MapLibre offline tile packs (base map requires network currently)
 - GPX file download (only GeoJSON + elevation are downloaded)
 - expo-location GPS integration + active hike screen
 - Accommodation icons + station timetable links on detail screen
 - Dark mode theming (system setting is respected but no dark color palette)
-- Unit / component / integration tests
+- Component / integration tests (unit test infrastructure is ready)
 - Field testing
 - FDroid / sideloading distribution setup
 
@@ -56,24 +57,23 @@ As of 2026-04-10, the initial scaffold is in place. The app builds and runs on i
 - [x] Local iOS build working (`bun run ios`)
 - [x] MapLibre config plugin integrated
 - [x] ESLint setup with eslint-config-expo + GitHub Actions CI
-- [ ] Prettier, Vitest setup
+- [x] Prettier, Vitest setup
 - [x] Port TS interfaces from web project
-- [ ] Port i18n dictionary from `../open-rando/website/src/lib/i18n.ts`
+- [x] Port i18n dictionary from web project (FR/EN, language selector in Settings)
 
 ### Week 3-4: Data Layer
 
 - [x] Catalog fetch service (TanStack Query)
 - [x] SQLite schema + seed from catalog.json
-- [ ] Filter queries in SQL (difficulty, distance range, step count, region, trail type, terrain, accommodation)
 - [x] Hike List screen (without filter bottom sheet)
 - [x] Hike Card component
 
 ### Week 5-6: Maps & Detail
 
 - [x] MapLibre React Native integration
-- [ ] Explore Map view with trail GeoJSON rendering
+- [x] Explore Map view with route markers (bbox center, difficulty-colored, list/map toggle)
 - [x] Hike Detail screen (stats, steps, map)
-- [ ] Elevation Chart component with react-native-svg
+- [x] Elevation Chart component with react-native-svg (touch cursor, station markers)
 
 ### Week 7-8: Offline & GPS
 

@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 import type { Difficulty } from "@/lib/types";
 import { colors, fontSize, borderRadius } from "@/lib/theme";
+import { t } from "@/lib/i18n";
 
 interface DifficultyBadgeProps {
   difficulty: Difficulty;
@@ -13,25 +14,13 @@ const difficultyColors: Record<Difficulty, string> = {
   very_difficult: colors.veryDifficult,
 };
 
-const difficultyLabels: Record<Difficulty, string> = {
-  easy: "Easy",
-  moderate: "Moderate",
-  difficult: "Difficult",
-  very_difficult: "Very Difficult",
-};
-
 export function DifficultyBadge({ difficulty }: DifficultyBadgeProps) {
   return (
     <View
-      style={[
-        styles.badge,
-        { backgroundColor: difficultyColors[difficulty] + "20" },
-      ]}
+      style={[styles.badge, { backgroundColor: difficultyColors[difficulty] + "20" }]}
     >
-      <Text
-        style={[styles.text, { color: difficultyColors[difficulty] }]}
-      >
-        {difficultyLabels[difficulty]}
+      <Text style={[styles.text, { color: difficultyColors[difficulty] }]}>
+        {t(`difficulty.${difficulty}`)}
       </Text>
     </View>
   );

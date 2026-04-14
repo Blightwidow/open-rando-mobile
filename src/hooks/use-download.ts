@@ -3,9 +3,7 @@ import { useDownloadStore } from "@/stores/download-store";
 import type { Route } from "@/lib/types";
 
 export function useDownload(route: Route) {
-  const downloadState = useDownloadStore((state) =>
-    state.getDownloadState(route.id),
-  );
+  const downloadState = useDownloadStore((state) => state.getDownloadState(route.id));
   const startDownload = useDownloadStore((state) => state.startDownload);
   const removeDownload = useDownloadStore((state) => state.removeDownload);
 

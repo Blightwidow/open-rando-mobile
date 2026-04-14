@@ -58,10 +58,7 @@ export const useDownloadStore = create<DownloadStore>()(
               [route.id]: {
                 status: "error",
                 progress: 0,
-                error:
-                  error instanceof Error
-                    ? error.message
-                    : "Download failed",
+                error: error instanceof Error ? error.message : "Download failed",
               },
             },
           }));

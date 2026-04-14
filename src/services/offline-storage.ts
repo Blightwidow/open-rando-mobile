@@ -72,9 +72,7 @@ export async function readGeoJson(routeId: string): Promise<unknown> {
   return JSON.parse(content);
 }
 
-export async function readElevation(
-  routeId: string,
-): Promise<ElevationProfile> {
+export async function readElevation(routeId: string): Promise<ElevationProfile> {
   const content = await elevationFile(routeId).text();
   return JSON.parse(content) as ElevationProfile;
 }

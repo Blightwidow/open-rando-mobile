@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "open-rando-mobile",
-    "slug": "open-rando-mobile",
+    "name": "TrainRando",
+    "slug": "trainrando",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "scheme": "open-rando",
+    "scheme": "trainrando",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "fr.dammaretz.openrando"
+      "bundleIdentifier": "fr.dammaretz.trainrando"
     },
     "android": {
       "adaptiveIcon": {
@@ -23,7 +23,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "fr.dammaretz.openrando"
+      "package": "fr.dammaretz.trainrando"
     },
     "web": {
       "favicon": "./assets/favicon.png",

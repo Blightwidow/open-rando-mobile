@@ -2,7 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { getRouteBySlug } from "@/services/database";
 import { readGeoJson, readElevation } from "@/services/offline-storage";
 import { useDownloadStore } from "@/stores/download-store";
-import type { Route, ElevationProfile } from "@/lib/types";
+import type { Route, ElevationProfile, DownloadState } from "@/lib/types";
+
+const IDLE_DOWNLOAD_STATE: DownloadState = { status: "idle", progress: 0 };
 
 interface OfflineRouteData {
   route: Route | null;
@@ -21,9 +23,7 @@ export function useOfflineRoute(slug: string): OfflineRouteData {
 
   const routeId = routeQuery.data?.id;
   const downloadState = useDownloadStore((state) =>
-    routeId
-      ? state.getDownloadState(routeId)
-      : { status: "idle" as const, progress: 0 },
+    routeId ? state.getDownloadState(routeId) : IDLE_DOWNLOAD_STATE,
   );
   const isDownloaded = downloadState.status === "complete";
 
@@ -43,8 +43,7 @@ export function useOfflineRoute(slug: string): OfflineRouteData {
     route: routeQuery.data ?? null,
     geoJson: geoJsonQuery.data ?? null,
     elevation: elevationQuery.data ?? null,
-    isLoading:
-      routeQuery.isLoading || geoJsonQuery.isLoading || elevationQuery.isLoading,
+    isLoading: routeQuery.isLoading || geoJsonQuery.isLoading || elevationQuery.isLoading,
     error:
       (routeQuery.error as Error) ??
       (geoJsonQuery.error as Error) ??

@@ -1,25 +1,27 @@
-import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { useRoute } from "@/hooks/use-catalog";
 import { DownloadButton } from "@/components/download-button";
 import { TrailMap } from "@/components/trail-map";
+import { ElevationChart } from "@/components/elevation-chart";
 import { useDownloadStore } from "@/stores/download-store";
 import { useOfflineRoute } from "@/hooks/use-offline-route";
 import { formatDistance, formatElevation } from "@/lib/format";
 import { DifficultyBadge } from "@/components/difficulty-badge";
 import { colors, spacing, fontSize, borderRadius } from "@/lib/theme";
+import { t } from "@/lib/i18n";
+import { useLocale } from "@/hooks/use-locale";
+import type { DownloadState } from "@/lib/types";
+
+const IDLE_DOWNLOAD_STATE: DownloadState = { status: "idle", progress: 0 };
 
 export default function RouteDetailScreen() {
+  useLocale();
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const { data: route, isLoading, error } = useRoute(slug);
+  const routeId = route?.id;
   const downloadState = useDownloadStore((state) =>
-    route ? state.getDownloadState(route.id) : { status: "idle" as const, progress: 0 },
+    routeId ? state.getDownloadState(routeId) : IDLE_DOWNLOAD_STATE,
   );
   const offlineData = useOfflineRoute(slug);
 
@@ -34,13 +36,12 @@ export default function RouteDetailScreen() {
   if (error || !route) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.errorText}>Route not found</Text>
+        <Text style={styles.errorText}>{t("route.notFound")}</Text>
       </View>
     );
   }
 
-  const showMap =
-    downloadState.status === "complete" && offlineData.geoJson != null;
+  const showMap = downloadState.status === "complete" && offlineData.geoJson != null;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -55,22 +56,20 @@ export default function RouteDetailScreen() {
       {route.description ? (
         <Text style={styles.description}>{route.description}</Text>
       ) : null}
-      {route.region ? (
-        <Text style={styles.region}>{route.region}</Text>
-      ) : null}
+      {route.region ? <Text style={styles.region}>{route.region}</Text> : null}
 
       <View style={styles.statsGrid}>
-        <StatItem label="Distance" value={formatDistance(route.distance_km)} />
+        <StatItem label={t("route.distance")} value={formatDistance(route.distance_km)} />
         <StatItem
-          label="Elevation ↑"
+          label={t("route.elevationGain")}
           value={formatElevation(route.elevation_gain_m)}
         />
         <StatItem
-          label="Elevation ↓"
+          label={t("route.elevationLoss")}
           value={formatElevation(route.elevation_loss_m)}
         />
         <StatItem
-          label="Max altitude"
+          label={t("route.maxAltitude")}
           value={formatElevation(route.max_elevation_m)}
         />
       </View>
@@ -79,7 +78,7 @@ export default function RouteDetailScreen() {
         <View style={styles.terrainRow}>
           {route.terrain.map((terrain) => (
             <View key={terrain} style={styles.terrainBadge}>
-              <Text style={styles.terrainText}>{terrain}</Text>
+              <Text style={styles.terrainText}>{t(`terrain.${terrain}`)}</Text>
             </View>
           ))}
         </View>
@@ -89,12 +88,15 @@ export default function RouteDetailScreen() {
 
       {showMap && (
         <View style={styles.mapSection}>
-          <Text style={styles.sectionTitle}>Trail Map</Text>
-          <TrailMap
-            geoJson={offlineData.geoJson}
-            bbox={route.bbox}
-            pois={route.pois}
-          />
+          <Text style={styles.sectionTitle}>{t("route.trailMap")}</Text>
+          <TrailMap geoJson={offlineData.geoJson} bbox={route.bbox} pois={route.pois} />
+        </View>
+      )}
+
+      {offlineData.elevation && (
+        <View style={styles.elevationSection}>
+          <Text style={styles.sectionTitle}>{t("route.elevationProfile")}</Text>
+          <ElevationChart elevation={offlineData.elevation} />
         </View>
       )}
     </ScrollView>
@@ -198,9 +200,11 @@ const styles = StyleSheet.create({
   terrainText: {
     fontSize: fontSize.small,
     color: colors.textSecondary,
-    textTransform: "capitalize",
   },
   mapSection: {
+    marginTop: spacing.medium,
+  },
+  elevationSection: {
     marginTop: spacing.medium,
   },
   sectionTitle: {

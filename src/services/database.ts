@@ -10,9 +10,7 @@ export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   return database;
 }
 
-async function initializeDatabase(
-  database: SQLite.SQLiteDatabase,
-): Promise<void> {
+async function initializeDatabase(database: SQLite.SQLiteDatabase): Promise<void> {
   await database.execAsync(`
     DROP TABLE IF EXISTS hikes;
 
@@ -49,15 +47,12 @@ export async function getMetadataValue(key: string): Promise<string | null> {
   return result?.value ?? null;
 }
 
-export async function setMetadataValue(
-  key: string,
-  value: string,
-): Promise<void> {
+export async function setMetadataValue(key: string, value: string): Promise<void> {
   const database = await getDatabase();
-  await database.runAsync(
-    "INSERT OR REPLACE INTO metadata (key, value) VALUES (?, ?)",
-    [key, value],
-  );
+  await database.runAsync("INSERT OR REPLACE INTO metadata (key, value) VALUES (?, ?)", [
+    key,
+    value,
+  ]);
 }
 
 export async function upsertRoutes(routes: Route[]): Promise<void> {

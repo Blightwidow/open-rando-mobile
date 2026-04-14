@@ -17,11 +17,7 @@ interface TrailMapProps {
   pois?: PointOfInterest[];
 }
 
-export function TrailMap({
-  geoJson,
-  bbox,
-  pois,
-}: TrailMapProps) {
+export function TrailMap({ geoJson, bbox, pois }: TrailMapProps) {
   const bounds = {
     ne: [bbox[2], bbox[3]] as [number, number],
     sw: [bbox[0], bbox[1]] as [number, number],
@@ -40,10 +36,7 @@ export function TrailMap({
         attributionEnabled={true}
         attributionPosition={{ bottom: 8, right: 8 }}
       >
-        <MapLibreGL.Camera
-          bounds={bounds}
-          animationDuration={0}
-        />
+        <MapLibreGL.Camera bounds={bounds} animationDuration={0} />
 
         <MapLibreGL.ShapeSource
           id="trail-source"
