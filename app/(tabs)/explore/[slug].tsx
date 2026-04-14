@@ -11,13 +11,17 @@ import { DifficultyBadge } from "@/components/difficulty-badge";
 import { colors, spacing, fontSize, borderRadius } from "@/lib/theme";
 import { t } from "@/lib/i18n";
 import { useLocale } from "@/hooks/use-locale";
+import type { DownloadState } from "@/lib/types";
+
+const IDLE_DOWNLOAD_STATE: DownloadState = { status: "idle", progress: 0 };
 
 export default function RouteDetailScreen() {
   useLocale();
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const { data: route, isLoading, error } = useRoute(slug);
+  const routeId = route?.id;
   const downloadState = useDownloadStore((state) =>
-    route ? state.getDownloadState(route.id) : { status: "idle" as const, progress: 0 },
+    routeId ? state.getDownloadState(routeId) : IDLE_DOWNLOAD_STATE,
   );
   const offlineData = useOfflineRoute(slug);
 
