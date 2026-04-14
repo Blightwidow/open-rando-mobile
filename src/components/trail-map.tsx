@@ -1,23 +1,64 @@
-import { StyleSheet, View } from "react-native";
+import { useMemo, useRef, useState } from "react";
+import { Linking, Pressable, StyleSheet, Text, View, type ViewStyle } from "react-native";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import MapLibreGL from "@maplibre/maplibre-react-native";
 import { TILE_STYLE_URL } from "@/lib/constants";
-import { colors } from "@/lib/theme";
+import { colors, fontSize, spacing, borderRadius } from "@/lib/theme";
+import { t } from "@/lib/i18n";
+import { formatDistance } from "@/lib/format";
+import type { GpsPosition } from "@/stores/gps-store";
 import type { PointOfInterest } from "@/lib/types";
 
-const poiMarkerColors: Record<string, string> = {
-  train_station: colors.primary,
-  bus_stop: colors.primaryLight,
-  camping: colors.success,
-  hotel: "#6c757d",
-};
+interface SelectedPoi {
+  name: string;
+  poiType: string;
+  url: string;
+  hasDirectUrl: boolean;
+  distanceKm: number;
+}
+
+function buildPoiUrl(poi: PointOfInterest): { url: string; hasDirectUrl: boolean } {
+  if (poi.url) {
+    return { url: poi.url, hasDirectUrl: true };
+  }
+  const query = encodeURIComponent(poi.name);
+  return {
+    url: `https://maps.google.com/?q=${query}`,
+    hasDirectUrl: false,
+  };
+}
+
+const POI_COLOR_STOPS: [string, string][] = [
+  ["train_station", colors.primary],
+  ["bus_stop", colors.primaryLight],
+  ["camping", colors.success],
+  ["hotel", "#6c757d"],
+];
+
+const GPS_DOT_COLOR = "#007AFF";
+const GPS_ACCURACY_COLOR = "rgba(0,122,255,0.15)";
 
 interface TrailMapProps {
   geoJson: unknown;
   bbox: [number, number, number, number];
   pois?: PointOfInterest[];
+  userPosition?: GpsPosition | null;
+  followUserLocation?: boolean;
+  style?: ViewStyle;
+  onPoiPanelHeightChange?: (height: number) => void;
 }
 
-export function TrailMap({ geoJson, bbox, pois }: TrailMapProps) {
+export function TrailMap({
+  geoJson,
+  bbox,
+  pois,
+  userPosition,
+  followUserLocation,
+  style,
+  onPoiPanelHeightChange,
+}: TrailMapProps) {
+  const cameraRef = useRef<MapLibreGL.CameraRef>(null);
+  const [selectedPoi, setSelectedPoi] = useState<SelectedPoi | null>(null);
   const bounds = {
     ne: [bbox[2], bbox[3]] as [number, number],
     sw: [bbox[0], bbox[1]] as [number, number],
@@ -27,16 +68,89 @@ export function TrailMap({ geoJson, bbox, pois }: TrailMapProps) {
     paddingRight: 40,
   };
 
+  const poisGeoJson = useMemo(() => {
+    if (!pois || pois.length === 0) return null;
+    return {
+      type: "FeatureCollection" as const,
+      features: pois.map((poi) => ({
+        type: "Feature" as const,
+        geometry: {
+          type: "Point" as const,
+          coordinates: [poi.lon, poi.lat],
+        },
+        properties: {
+          poiType: poi.poi_type,
+          name: poi.name,
+          distanceKm: poi.distance_km,
+          ...buildPoiUrl(poi),
+        },
+      })),
+    };
+  }, [pois]);
+
+  const gpsPointGeoJson = useMemo(() => {
+    if (!userPosition) return null;
+    return {
+      type: "FeatureCollection" as const,
+      features: [
+        {
+          type: "Feature" as const,
+          geometry: {
+            type: "Point" as const,
+            coordinates: [userPosition.longitude, userPosition.latitude],
+          },
+          properties: {
+            accuracy: userPosition.accuracy,
+          },
+        },
+      ],
+    };
+  }, [userPosition]);
+
+  const handlePoiPress = (event: Parameters<NonNullable<React.ComponentProps<typeof MapLibreGL.ShapeSource>["onPress"]>>[0]) => {
+    const feature = event.features?.[0];
+    if (!feature?.properties) return;
+    const props = feature.properties as Record<string, unknown>;
+    setSelectedPoi({
+      name: String(props.name ?? ""),
+      poiType: String(props.poiType ?? ""),
+      url: String(props.url ?? ""),
+      hasDirectUrl: Boolean(props.hasDirectUrl),
+      distanceKm: Number(props.distanceKm ?? 0),
+    });
+  };
+
+  const handleRecenter = () => {
+    if (userPosition && cameraRef.current) {
+      cameraRef.current.setCamera({
+        centerCoordinate: [userPosition.longitude, userPosition.latitude],
+        zoomLevel: 14,
+        animationDuration: 500,
+      });
+    }
+  };
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       <MapLibreGL.MapView
         style={styles.map}
         mapStyle={TILE_STYLE_URL}
         logoEnabled={false}
         attributionEnabled={true}
         attributionPosition={{ bottom: 8, right: 8 }}
+        onPress={() => { setSelectedPoi(null); onPoiPanelHeightChange?.(0); }}
       >
-        <MapLibreGL.Camera bounds={bounds} animationDuration={0} />
+        <MapLibreGL.Camera
+          ref={cameraRef}
+          bounds={followUserLocation && userPosition ? undefined : bounds}
+          centerCoordinate={
+            followUserLocation && userPosition
+              ? [userPosition.longitude, userPosition.latitude]
+              : undefined
+          }
+          zoomLevel={followUserLocation && userPosition ? 14 : undefined}
+          animationDuration={0}
+        />
 
         <MapLibreGL.ShapeSource
           id="trail-source"
@@ -62,22 +176,88 @@ export function TrailMap({ geoJson, bbox, pois }: TrailMapProps) {
           />
         </MapLibreGL.ShapeSource>
 
-        {pois?.map((poi, index) => (
-          <MapLibreGL.PointAnnotation
-            key={`poi-${index}`}
-            id={`poi-${index}`}
-            coordinate={[poi.lon, poi.lat]}
-            title={poi.name}
-          >
-            <View
-              style={[
-                styles.marker,
-                { backgroundColor: poiMarkerColors[poi.poi_type] ?? colors.primary },
-              ]}
+        {gpsPointGeoJson && (
+          <MapLibreGL.ShapeSource id="gps-source" shape={gpsPointGeoJson}>
+            <MapLibreGL.CircleLayer
+              id="gps-accuracy-ring"
+              style={{
+                circleRadius: 30,
+                circleColor: GPS_ACCURACY_COLOR,
+                circleOpacity: 1,
+                circlePitchAlignment: "map",
+              }}
             />
-          </MapLibreGL.PointAnnotation>
-        ))}
+            <MapLibreGL.CircleLayer
+              id="gps-dot"
+              style={{
+                circleRadius: 7,
+                circleColor: GPS_DOT_COLOR,
+                circleStrokeColor: "#ffffff",
+                circleStrokeWidth: 2,
+                circlePitchAlignment: "map",
+              }}
+            />
+          </MapLibreGL.ShapeSource>
+        )}
+
+        {poisGeoJson && (
+          <MapLibreGL.ShapeSource
+            id="pois-source"
+            shape={poisGeoJson}
+            onPress={handlePoiPress}
+          >
+            <MapLibreGL.CircleLayer
+              id="pois-circles"
+              style={{
+                circleRadius: 7,
+                circleColor: [
+                  "match",
+                  ["get", "poiType"],
+                  ...POI_COLOR_STOPS.flat(),
+                  colors.primary,
+                ] as unknown as string,
+                circleStrokeColor: "#ffffff",
+                circleStrokeWidth: 2,
+              }}
+            />
+          </MapLibreGL.ShapeSource>
+        )}
       </MapLibreGL.MapView>
+
+      {userPosition && (
+        <Pressable style={styles.recenterButton} onPress={handleRecenter}>
+          <Ionicons name="locate" size={22} color={GPS_DOT_COLOR} />
+        </Pressable>
+      )}
+
+      {selectedPoi && (
+        <View
+          style={styles.poiPanel}
+          onLayout={(event) => onPoiPanelHeightChange?.(event.nativeEvent.layout.height)}
+        >
+          <View style={styles.poiPanelHeader}>
+            <View style={styles.poiPanelInfo}>
+              <Text style={styles.poiPanelName}>{selectedPoi.name}</Text>
+              <Text style={styles.poiPanelType}>
+                {t(`poi.${selectedPoi.poiType}`)} · {formatDistance(selectedPoi.distanceKm)}{" "}
+                {t("poi.distanceFromStart")}
+              </Text>
+            </View>
+            <Pressable onPress={() => { setSelectedPoi(null); onPoiPanelHeightChange?.(0); }} hitSlop={8}>
+              <Ionicons name="close" size={20} color={colors.textSecondary} />
+            </Pressable>
+          </View>
+          <Pressable
+            style={styles.poiPanelLink}
+            onPress={() => Linking.openURL(selectedPoi.url)}
+          >
+            <Ionicons name="open-outline" size={14} color={colors.primary} />
+            <Text style={styles.poiPanelLinkText}>
+              {selectedPoi.hasDirectUrl ? t("poi.viewLink") : t("poi.findOnMaps")}
+            </Text>
+          </Pressable>
+        </View>
+      )}
     </View>
   );
 }
@@ -91,11 +271,63 @@ const styles = StyleSheet.create({
   map: {
     flex: 1,
   },
-  marker: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    borderWidth: 2,
-    borderColor: "#fff",
+  recenterButton: {
+    position: "absolute",
+    bottom: 16,
+    right: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  poiPanel: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#fff",
+    borderTopLeftRadius: borderRadius.medium,
+    borderTopRightRadius: borderRadius.medium,
+    padding: spacing.medium,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  poiPanelHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: spacing.small,
+  },
+  poiPanelInfo: {
+    flex: 1,
+  },
+  poiPanelName: {
+    fontSize: fontSize.subtitle,
+    fontWeight: "700",
+    color: colors.text,
+  },
+  poiPanelType: {
+    fontSize: fontSize.small,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  poiPanelLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: spacing.small,
+  },
+  poiPanelLinkText: {
+    fontSize: fontSize.body,
+    color: colors.primary,
   },
 });

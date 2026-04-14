@@ -24,7 +24,7 @@ export function ElevationChart({ elevation }: ElevationChartProps) {
     ? {
         distances: elevation.distances_km,
         elevations: elevation.elevations_m,
-        stationPositions: elevation.station_positions_km,
+        stationPositions: elevation.station_positions_km ?? [],
       }
     : {
         distances: [] as number[],

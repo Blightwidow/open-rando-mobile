@@ -114,3 +114,41 @@ export async function getRouteCount(): Promise<number> {
   );
   return result?.count ?? 0;
 }
+
+export interface FilterParams {
+  regions: string[];
+}
+
+export function buildFilterQuery(filters: FilterParams): {
+  sql: string;
+  params: (string | number)[];
+} {
+  const conditions: string[] = [];
+  const params: (string | number)[] = [];
+
+  if (filters.regions.length > 0) {
+    const placeholders = filters.regions.map(() => "?").join(", ");
+    conditions.push(`region IN (${placeholders})`);
+    params.push(...filters.regions);
+  }
+
+  const whereClause = conditions.length > 0 ? ` WHERE ${conditions.join(" AND ")}` : "";
+  const sql = `SELECT data FROM routes${whereClause} ORDER BY path_ref, distance_km`;
+
+  return { sql, params };
+}
+
+export async function getFilteredRoutes(filters: FilterParams): Promise<Route[]> {
+  const database = await getDatabase();
+  const { sql, params } = buildFilterQuery(filters);
+  const rows = await database.getAllAsync<{ data: string }>(sql, params);
+  return rows.map((row) => JSON.parse(row.data) as Route);
+}
+
+export async function getDistinctRegions(): Promise<string[]> {
+  const database = await getDatabase();
+  const rows = await database.getAllAsync<{ region: string }>(
+    "SELECT DISTINCT region FROM routes WHERE region IS NOT NULL ORDER BY region",
+  );
+  return rows.map((row) => row.region);
+}

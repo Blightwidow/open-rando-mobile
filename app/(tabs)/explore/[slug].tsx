@@ -1,12 +1,23 @@
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useRoute } from "@/hooks/use-catalog";
 import { DownloadButton } from "@/components/download-button";
 import { TrailMap } from "@/components/trail-map";
 import { ElevationChart } from "@/components/elevation-chart";
 import { useDownloadStore } from "@/stores/download-store";
 import { useOfflineRoute } from "@/hooks/use-offline-route";
+import { useLocationPermission } from "@/hooks/use-location-permission";
+import { useGpsStore } from "@/stores/gps-store";
 import { formatDistance, formatElevation } from "@/lib/format";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { DifficultyBadge } from "@/components/difficulty-badge";
 import { colors, spacing, fontSize, borderRadius } from "@/lib/theme";
 import { t } from "@/lib/i18n";
@@ -17,13 +28,18 @@ const IDLE_DOWNLOAD_STATE: DownloadState = { status: "idle", progress: 0 };
 
 export default function RouteDetailScreen() {
   useLocale();
+  const router = useRouter();
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const { data: route, isLoading, error } = useRoute(slug);
   const routeId = route?.id;
   const downloadState = useDownloadStore((state) =>
     routeId ? state.getDownloadState(routeId) : IDLE_DOWNLOAD_STATE,
   );
+  const removeDownload = useDownloadStore((state) => state.removeDownload);
   const offlineData = useOfflineRoute(slug);
+  const { request: requestLocationPermission } = useLocationPermission();
+  const startFollowing = useGpsStore((state) => state.startFollowing);
+  const isTracking = useGpsStore((state) => state.isTracking);
 
   if (isLoading) {
     return (
@@ -42,6 +58,20 @@ export default function RouteDetailScreen() {
   }
 
   const showMap = downloadState.status === "complete" && offlineData.geoJson != null;
+  const canFollowRoute = showMap && !isTracking;
+
+  const handleFollowRoute = async () => {
+    if (!route) return;
+
+    const granted = await requestLocationPermission();
+    if (!granted) {
+      Alert.alert(t("gps.permissionRequired"), t("gps.permissionDenied"));
+      return;
+    }
+
+    startFollowing(route.id, route.slug);
+    router.push("/active");
+  };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -50,6 +80,16 @@ export default function RouteDetailScreen() {
           <Text style={styles.pathBadgeText}>{route.path_ref}</Text>
         </View>
         <DifficultyBadge difficulty={route.difficulty} />
+        {downloadState.status === "complete" && routeId && (
+          <Pressable
+            style={styles.downloadedLabel}
+            onPress={() => removeDownload(routeId)}
+            hitSlop={8}
+          >
+            <Text style={styles.downloadedLabelText}>{t("download.complete")}</Text>
+            <Ionicons name="trash-outline" size={14} color={colors.error} />
+          </Pressable>
+        )}
       </View>
 
       <Text style={styles.pathName}>{route.path_name}</Text>
@@ -86,10 +126,16 @@ export default function RouteDetailScreen() {
 
       <DownloadButton route={route} />
 
+      {canFollowRoute && (
+        <Pressable style={styles.startHikeButton} onPress={handleFollowRoute}>
+          <Text style={styles.startHikeText}>{t("route.followRoute")}</Text>
+        </Pressable>
+      )}
+
       {showMap && (
         <View style={styles.mapSection}>
           <Text style={styles.sectionTitle}>{t("route.trailMap")}</Text>
-          <TrailMap geoJson={offlineData.geoJson} bbox={route.bbox} pois={route.pois} />
+          <TrailMap geoJson={offlineData.geoJson} bbox={route.bbox} />
         </View>
       )}
 
@@ -135,6 +181,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: spacing.small,
     marginBottom: spacing.small,
+    flex: 1,
   },
   pathBadge: {
     backgroundColor: colors.primary,
@@ -146,6 +193,16 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: fontSize.body,
     fontWeight: "700",
+  },
+  downloadedLabel: {
+    marginLeft: "auto",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  downloadedLabelText: {
+    fontSize: fontSize.small,
+    color: colors.textSecondary,
   },
   pathName: {
     fontSize: fontSize.title,
@@ -212,5 +269,17 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: colors.text,
     marginBottom: spacing.small,
+  },
+  startHikeButton: {
+    backgroundColor: colors.success,
+    borderRadius: borderRadius.medium,
+    paddingVertical: spacing.small + 2,
+    alignItems: "center",
+    marginTop: spacing.small,
+  },
+  startHikeText: {
+    color: "#fff",
+    fontSize: fontSize.subtitle,
+    fontWeight: "700",
   },
 });
