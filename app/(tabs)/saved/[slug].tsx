@@ -1,10 +1,4 @@
-import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { useOfflineRoute } from "@/hooks/use-offline-route";
 import { TrailMap } from "@/components/trail-map";
@@ -48,24 +42,14 @@ export default function OfflineRouteDetailScreen() {
 
       <View style={styles.statsGrid}>
         <StatItem label="Distance" value={formatDistance(route.distance_km)} />
-        <StatItem
-          label="Elevation ↑"
-          value={formatElevation(route.elevation_gain_m)}
-        />
-        <StatItem
-          label="Elevation ↓"
-          value={formatElevation(route.elevation_loss_m)}
-        />
+        <StatItem label="Elevation ↑" value={formatElevation(route.elevation_gain_m)} />
+        <StatItem label="Elevation ↓" value={formatElevation(route.elevation_loss_m)} />
       </View>
 
       {geoJson != null && (
         <View style={styles.mapSection}>
           <Text style={styles.sectionTitle}>Trail Map</Text>
-          <TrailMap
-            geoJson={geoJson}
-            bbox={route.bbox}
-            pois={route.pois}
-          />
+          <TrailMap geoJson={geoJson} bbox={route.bbox} pois={route.pois} />
         </View>
       )}
     </ScrollView>

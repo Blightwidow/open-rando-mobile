@@ -23,14 +23,9 @@ const difficultyLabels: Record<Difficulty, string> = {
 export function DifficultyBadge({ difficulty }: DifficultyBadgeProps) {
   return (
     <View
-      style={[
-        styles.badge,
-        { backgroundColor: difficultyColors[difficulty] + "20" },
-      ]}
+      style={[styles.badge, { backgroundColor: difficultyColors[difficulty] + "20" }]}
     >
-      <Text
-        style={[styles.text, { color: difficultyColors[difficulty] }]}
-      >
+      <Text style={[styles.text, { color: difficultyColors[difficulty] }]}>
         {difficultyLabels[difficulty]}
       </Text>
     </View>

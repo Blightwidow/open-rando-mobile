@@ -12,15 +12,10 @@ interface RouteCardProps {
 
 export function RouteCard({ route }: RouteCardProps) {
   const router = useRouter();
-  const downloadState = useDownloadStore((state) =>
-    state.getDownloadState(route.id),
-  );
+  const downloadState = useDownloadStore((state) => state.getDownloadState(route.id));
 
   return (
-    <Pressable
-      style={styles.card}
-      onPress={() => router.push(`/explore/${route.slug}`)}
-    >
+    <Pressable style={styles.card} onPress={() => router.push(`/explore/${route.slug}`)}>
       <View style={styles.header}>
         <View style={styles.pathBadge}>
           <Text style={styles.pathBadgeText}>{route.path_ref}</Text>
@@ -39,16 +34,12 @@ export function RouteCard({ route }: RouteCardProps) {
         </Text>
       ) : null}
 
-      {route.region ? (
-        <Text style={styles.region}>{route.region}</Text>
-      ) : null}
+      {route.region ? <Text style={styles.region}>{route.region}</Text> : null}
 
       <View style={styles.stats}>
         <Text style={styles.stat}>{formatDistance(route.distance_km)}</Text>
         <Text style={styles.statSeparator}>·</Text>
-        <Text style={styles.stat}>
-          ↑ {formatElevation(route.elevation_gain_m)}
-        </Text>
+        <Text style={styles.stat}>↑ {formatElevation(route.elevation_gain_m)}</Text>
       </View>
     </Pressable>
   );

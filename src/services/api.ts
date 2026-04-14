@@ -17,14 +17,10 @@ export async function fetchGeoJson(routeId: string): Promise<unknown> {
   return response.json();
 }
 
-export async function fetchElevation(
-  routeId: string,
-): Promise<ElevationProfile> {
+export async function fetchElevation(routeId: string): Promise<ElevationProfile> {
   const response = await fetch(`${BASE_DATA_URL}/elevation/${routeId}.json`);
   if (!response.ok) {
-    throw new Error(
-      `Failed to fetch elevation for ${routeId}: ${response.status}`,
-    );
+    throw new Error(`Failed to fetch elevation for ${routeId}: ${response.status}`);
   }
   return response.json();
 }

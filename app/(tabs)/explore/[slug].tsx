@@ -1,10 +1,4 @@
-import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { useRoute } from "@/hooks/use-catalog";
 import { DownloadButton } from "@/components/download-button";
@@ -39,8 +33,7 @@ export default function RouteDetailScreen() {
     );
   }
 
-  const showMap =
-    downloadState.status === "complete" && offlineData.geoJson != null;
+  const showMap = downloadState.status === "complete" && offlineData.geoJson != null;
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -55,24 +48,13 @@ export default function RouteDetailScreen() {
       {route.description ? (
         <Text style={styles.description}>{route.description}</Text>
       ) : null}
-      {route.region ? (
-        <Text style={styles.region}>{route.region}</Text>
-      ) : null}
+      {route.region ? <Text style={styles.region}>{route.region}</Text> : null}
 
       <View style={styles.statsGrid}>
         <StatItem label="Distance" value={formatDistance(route.distance_km)} />
-        <StatItem
-          label="Elevation ↑"
-          value={formatElevation(route.elevation_gain_m)}
-        />
-        <StatItem
-          label="Elevation ↓"
-          value={formatElevation(route.elevation_loss_m)}
-        />
-        <StatItem
-          label="Max altitude"
-          value={formatElevation(route.max_elevation_m)}
-        />
+        <StatItem label="Elevation ↑" value={formatElevation(route.elevation_gain_m)} />
+        <StatItem label="Elevation ↓" value={formatElevation(route.elevation_loss_m)} />
+        <StatItem label="Max altitude" value={formatElevation(route.max_elevation_m)} />
       </View>
 
       {route.terrain.length > 0 && (
@@ -90,11 +72,7 @@ export default function RouteDetailScreen() {
       {showMap && (
         <View style={styles.mapSection}>
           <Text style={styles.sectionTitle}>Trail Map</Text>
-          <TrailMap
-            geoJson={offlineData.geoJson}
-            bbox={route.bbox}
-            pois={route.pois}
-          />
+          <TrailMap geoJson={offlineData.geoJson} bbox={route.bbox} pois={route.pois} />
         </View>
       )}
     </ScrollView>

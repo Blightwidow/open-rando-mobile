@@ -21,9 +21,7 @@ export function useOfflineRoute(slug: string): OfflineRouteData {
 
   const routeId = routeQuery.data?.id;
   const downloadState = useDownloadStore((state) =>
-    routeId
-      ? state.getDownloadState(routeId)
-      : { status: "idle" as const, progress: 0 },
+    routeId ? state.getDownloadState(routeId) : { status: "idle" as const, progress: 0 },
   );
   const isDownloaded = downloadState.status === "complete";
 
@@ -43,8 +41,7 @@ export function useOfflineRoute(slug: string): OfflineRouteData {
     route: routeQuery.data ?? null,
     geoJson: geoJsonQuery.data ?? null,
     elevation: elevationQuery.data ?? null,
-    isLoading:
-      routeQuery.isLoading || geoJsonQuery.isLoading || elevationQuery.isLoading,
+    isLoading: routeQuery.isLoading || geoJsonQuery.isLoading || elevationQuery.isLoading,
     error:
       (routeQuery.error as Error) ??
       (geoJsonQuery.error as Error) ??

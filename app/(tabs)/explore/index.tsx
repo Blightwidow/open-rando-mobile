@@ -36,9 +36,7 @@ export default function ExploreScreen() {
     return (
       <View style={styles.centered}>
         <Text style={styles.emptyText}>No routes available</Text>
-        <Text style={styles.emptyDetail}>
-          Pull to refresh or check your connection
-        </Text>
+        <Text style={styles.emptyDetail}>Pull to refresh or check your connection</Text>
       </View>
     );
   }

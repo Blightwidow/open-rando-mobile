@@ -1,11 +1,4 @@
-import {
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  Alert,
-} from "react-native";
+import { FlatList, Pressable, StyleSheet, Text, View, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { useDownloadStore } from "@/stores/download-store";
@@ -37,18 +30,14 @@ export default function SavedScreen() {
   });
 
   const handleRemove = (route: Route) => {
-    Alert.alert(
-      "Remove Download",
-      `Remove offline data for "${route.path_name}"?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Remove",
-          style: "destructive",
-          onPress: () => removeDownload(route.id),
-        },
-      ],
-    );
+    Alert.alert("Remove Download", `Remove offline data for "${route.path_name}"?`, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Remove",
+        style: "destructive",
+        onPress: () => removeDownload(route.id),
+      },
+    ]);
   };
 
   if (downloadedIds.length === 0) {
@@ -68,10 +57,7 @@ export default function SavedScreen() {
       keyExtractor={(item) => item.id}
       contentContainerStyle={styles.list}
       renderItem={({ item }) => (
-        <Pressable
-          style={styles.card}
-          onPress={() => router.push(`/saved/${item.slug}`)}
-        >
+        <Pressable style={styles.card} onPress={() => router.push(`/saved/${item.slug}`)}>
           <View style={styles.cardHeader}>
             <View style={styles.pathBadge}>
               <Text style={styles.pathBadgeText}>{item.path_ref}</Text>
@@ -81,18 +67,11 @@ export default function SavedScreen() {
             {item.path_name}
           </Text>
           <View style={styles.stats}>
-            <Text style={styles.stat}>
-              {formatDistance(item.distance_km)}
-            </Text>
+            <Text style={styles.stat}>{formatDistance(item.distance_km)}</Text>
             <Text style={styles.statSeparator}>·</Text>
-            <Text style={styles.stat}>
-              ↑ {formatElevation(item.elevation_gain_m)}
-            </Text>
+            <Text style={styles.stat}>↑ {formatElevation(item.elevation_gain_m)}</Text>
           </View>
-          <Pressable
-            style={styles.removeButton}
-            onPress={() => handleRemove(item)}
-          >
+          <Pressable style={styles.removeButton} onPress={() => handleRemove(item)}>
             <Text style={styles.removeText}>Remove</Text>
           </Pressable>
         </Pressable>

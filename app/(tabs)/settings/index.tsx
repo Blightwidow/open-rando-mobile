@@ -52,8 +52,8 @@ export default function SettingsScreen() {
           <Text style={styles.value}>1.0.0</Text>
         </View>
         <Text style={styles.description}>
-          Companion app for open-rando — offline hiking between train stations on
-          French GR trails.
+          Companion app for open-rando — offline hiking between train stations on French
+          GR trails.
         </Text>
         <Text style={styles.link}>rando.dammaretz.fr</Text>
       </View>

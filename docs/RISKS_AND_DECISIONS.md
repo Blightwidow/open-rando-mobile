@@ -2,22 +2,23 @@
 
 ## Risks
 
-| Risk | Impact | Mitigation |
-|------|--------|-----------|
-| Map tile storage bloat | Users run out of device storage | Show estimated size before download; per-hike deletion; cap at z15 |
-| GPS battery drain | Phone dies mid-hike | Updates every 10-15s; battery warning in UI; document expected drain |
-| OpenTopoMap rate limiting | Tile downloads throttled | Retry with backoff; consider IGN Geoplateforme as alternative |
-| MapLibre offline pack reliability | Tile download fails silently | Verify pack completeness; show "partially downloaded" state; allow re-download |
+| Risk                                 | Impact                                 | Mitigation                                                                                |
+| ------------------------------------ | -------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Map tile storage bloat               | Users run out of device storage        | Show estimated size before download; per-hike deletion; cap at z15                        |
+| GPS battery drain                    | Phone dies mid-hike                    | Updates every 10-15s; battery warning in UI; document expected drain                      |
+| OpenTopoMap rate limiting            | Tile downloads throttled               | Retry with backoff; consider IGN Geoplateforme as alternative                             |
+| MapLibre offline pack reliability    | Tile download fails silently           | Verify pack completeness; show "partially downloaded" state; allow re-download            |
 | iOS background location restrictions | Apple rejects or limits background GPS | "Always" permission only Phase 2; clear Info.plist justification; Phase 1 foreground only |
-| App Store rejection | Apple considers it a web wrapper | Offline-first GPS tracking is clear native value; not a WebView app |
-| Catalog growth (228KB -> 1MB+) | Slow launch on poor connections | ETag conditional fetch; consider lightweight metadata-only endpoint |
-| FFRP trademark concerns | Same risk as web project | Use "hiking between train stations"; no GR logos |
+| App Store rejection                  | Apple considers it a web wrapper       | Offline-first GPS tracking is clear native value; not a WebView app                       |
+| Catalog growth (228KB -> 1MB+)       | Slow launch on poor connections        | ETag conditional fetch; consider lightweight metadata-only endpoint                       |
+| FFRP trademark concerns              | Same risk as web project               | Use "hiking between train stations"; no GR logos                                          |
 
 ## Open Decisions
 
 ### 1. Offline Tile Source
 
 **Options**:
+
 - **OpenTopoMap**: hiking-oriented styling, great for trail visibility, but no official offline/bulk download API
 - **IGN Geoplateforme**: better France coverage, official API with reasonable limits, less hiking-styled
 
@@ -36,6 +37,7 @@ Per project philosophy: no analytics, no cookies, no accounts.
 **Why**: Avoids Apple Developer Program ($99/year) and Google Play ($25) costs. Aligns with open-source philosophy. FDroid is a natural fit for a GPLv3 privacy-first app with no tracking.
 
 **Implications**:
+
 - No EAS Build dependency — local builds with `bunx expo run:android` / `bunx expo run:ios`
 - Android APK built locally with Gradle after `bunx expo prebuild`
 - iOS distribution via AltStore or TestFlight later if needed
