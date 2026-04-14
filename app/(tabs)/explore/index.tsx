@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -13,7 +13,8 @@ import { RouteCard } from "@/components/route-card";
 import { ExploreMap } from "@/components/explore-map";
 import { FilterSheet } from "@/components/filter-sheet";
 import { useFilterStore } from "@/stores/filter-store";
-import { colors, spacing, fontSize, borderRadius } from "@/lib/theme";
+import { spacing, fontSize, borderRadius } from "@/lib/theme";
+import { useColors } from "@/hooks/use-colors";
 import { t } from "@/lib/i18n";
 import { useLocale } from "@/hooks/use-locale";
 import type { Route } from "@/lib/types";
@@ -22,11 +23,113 @@ type ViewMode = "list" | "map";
 
 export default function ExploreScreen() {
   useLocale();
+  const colors = useColors();
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [filterVisible, setFilterVisible] = useState(false);
   const { data: routes, isLoading, error, refetch } = useFilteredRoutes();
   const { mutate: syncCatalog, isPending: isSyncing } = useCatalogSync();
   const activeFilterCount = useFilterStore((state) => state.activeFilterCount);
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          flex: 1,
+          backgroundColor: colors.background,
+        },
+        list: {
+          paddingVertical: spacing.small,
+        },
+        centered: {
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          padding: spacing.large,
+        },
+        loadingText: {
+          marginTop: spacing.medium,
+          fontSize: fontSize.body,
+          color: colors.textSecondary,
+        },
+        errorText: {
+          fontSize: fontSize.title,
+          fontWeight: "600",
+          color: colors.error,
+        },
+        errorDetail: {
+          marginTop: spacing.small,
+          fontSize: fontSize.body,
+          color: colors.textSecondary,
+          textAlign: "center",
+        },
+        emptyText: {
+          fontSize: fontSize.title,
+          fontWeight: "600",
+          color: colors.text,
+        },
+        emptyDetail: {
+          marginTop: spacing.small,
+          fontSize: fontSize.body,
+          color: colors.textSecondary,
+        },
+        toggleContainer: {
+          paddingHorizontal: spacing.medium,
+          paddingVertical: spacing.small,
+          backgroundColor: colors.background,
+        },
+        toggleRow: {
+          flexDirection: "row",
+          alignItems: "center",
+          gap: spacing.small,
+        },
+        toggle: {
+          flex: 1,
+          flexDirection: "row",
+          borderRadius: borderRadius.medium,
+          borderWidth: 1,
+          borderColor: colors.border,
+          overflow: "hidden",
+        },
+        toggleButton: {
+          flex: 1,
+          paddingVertical: spacing.small,
+          alignItems: "center",
+          backgroundColor: colors.surface,
+        },
+        toggleButtonActive: {
+          backgroundColor: colors.primary,
+        },
+        toggleText: {
+          fontSize: fontSize.body,
+          fontWeight: "600",
+          color: colors.textSecondary,
+        },
+        toggleTextActive: {
+          color: "#fff",
+        },
+        filterButton: {
+          padding: spacing.small,
+          position: "relative",
+        },
+        filterBadge: {
+          position: "absolute",
+          top: 2,
+          right: 2,
+          backgroundColor: colors.primary,
+          borderRadius: 999,
+          width: 16,
+          height: 16,
+          justifyContent: "center",
+          alignItems: "center",
+        },
+        filterBadgeText: {
+          color: "#fff",
+          fontSize: 10,
+          fontWeight: "700",
+        },
+      }),
+    [colors],
+  );
 
   const handleRefresh = () => {
     syncCatalog(undefined, {
@@ -137,100 +240,3 @@ export default function ExploreScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  list: {
-    paddingVertical: spacing.small,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: spacing.large,
-  },
-  loadingText: {
-    marginTop: spacing.medium,
-    fontSize: fontSize.body,
-    color: colors.textSecondary,
-  },
-  errorText: {
-    fontSize: fontSize.title,
-    fontWeight: "600",
-    color: colors.error,
-  },
-  errorDetail: {
-    marginTop: spacing.small,
-    fontSize: fontSize.body,
-    color: colors.textSecondary,
-    textAlign: "center",
-  },
-  emptyText: {
-    fontSize: fontSize.title,
-    fontWeight: "600",
-    color: colors.text,
-  },
-  emptyDetail: {
-    marginTop: spacing.small,
-    fontSize: fontSize.body,
-    color: colors.textSecondary,
-  },
-  toggleContainer: {
-    paddingHorizontal: spacing.medium,
-    paddingVertical: spacing.small,
-    backgroundColor: colors.background,
-  },
-  toggleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.small,
-  },
-  toggle: {
-    flex: 1,
-    flexDirection: "row",
-    borderRadius: borderRadius.medium,
-    borderWidth: 1,
-    borderColor: colors.border,
-    overflow: "hidden",
-  },
-  toggleButton: {
-    flex: 1,
-    paddingVertical: spacing.small,
-    alignItems: "center",
-    backgroundColor: colors.surface,
-  },
-  toggleButtonActive: {
-    backgroundColor: colors.primary,
-  },
-  toggleText: {
-    fontSize: fontSize.body,
-    fontWeight: "600",
-    color: colors.textSecondary,
-  },
-  toggleTextActive: {
-    color: "#fff",
-  },
-  filterButton: {
-    padding: spacing.small,
-    position: "relative",
-  },
-  filterBadge: {
-    position: "absolute",
-    top: 2,
-    right: 2,
-    backgroundColor: colors.primary,
-    borderRadius: 999,
-    width: 16,
-    height: 16,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  filterBadgeText: {
-    color: "#fff",
-    fontSize: 10,
-    fontWeight: "700",
-  },
-});

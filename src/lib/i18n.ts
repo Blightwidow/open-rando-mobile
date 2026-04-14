@@ -62,6 +62,10 @@ const translations: Record<Locale, Record<string, string>> = {
     "settings.description":
       "Application compagnon pour TrainRando — randonnées hors-ligne entre gares sur les sentiers GR français.",
     "settings.language": "Langue",
+    "settings.appearance": "Apparence",
+    "settings.theme.light": "Clair",
+    "settings.theme.dark": "Sombre",
+    "settings.theme.system": "Système",
 
     // Difficulty
     "difficulty.easy": "Facile",
@@ -162,6 +166,10 @@ const translations: Record<Locale, Record<string, string>> = {
     "settings.description":
       "Companion app for TrainRando — offline hiking between train stations on French GR trails.",
     "settings.language": "Language",
+    "settings.appearance": "Appearance",
+    "settings.theme.light": "Light",
+    "settings.theme.dark": "Dark",
+    "settings.theme.system": "System",
 
     // Difficulty
     "difficulty.easy": "Easy",

@@ -1,18 +1,20 @@
 import { Tabs } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useGpsStore } from "@/stores/gps-store";
-import { colors } from "@/lib/theme";
 import { t } from "@/lib/i18n";
 import { useLocale } from "@/hooks/use-locale";
+import { useColors } from "@/hooks/use-colors";
 
 export default function TabLayout() {
   useLocale();
+  const colors = useColors();
   const isTracking = useGpsStore((state) => state.isTracking);
 
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
+        tabBarStyle: { backgroundColor: colors.background },
         headerShown: true,
       }}
     >
