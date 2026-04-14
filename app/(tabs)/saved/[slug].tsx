@@ -2,6 +2,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-nat
 import { useLocalSearchParams } from "expo-router";
 import { useOfflineRoute } from "@/hooks/use-offline-route";
 import { TrailMap } from "@/components/trail-map";
+import { ElevationChart } from "@/components/elevation-chart";
 import { formatDistance, formatElevation } from "@/lib/format";
 import { DifficultyBadge } from "@/components/difficulty-badge";
 import { colors, spacing, fontSize, borderRadius } from "@/lib/theme";
@@ -11,7 +12,7 @@ import { useLocale } from "@/hooks/use-locale";
 export default function OfflineRouteDetailScreen() {
   useLocale();
   const { slug } = useLocalSearchParams<{ slug: string }>();
-  const { route, geoJson, isLoading, error } = useOfflineRoute(slug);
+  const { route, geoJson, elevation, isLoading, error } = useOfflineRoute(slug);
 
   if (isLoading) {
     return (
@@ -59,6 +60,13 @@ export default function OfflineRouteDetailScreen() {
         <View style={styles.mapSection}>
           <Text style={styles.sectionTitle}>{t("route.trailMap")}</Text>
           <TrailMap geoJson={geoJson} bbox={route.bbox} pois={route.pois} />
+        </View>
+      )}
+
+      {elevation && (
+        <View style={styles.elevationSection}>
+          <Text style={styles.sectionTitle}>{t("route.elevationProfile")}</Text>
+          <ElevationChart elevation={elevation} />
         </View>
       )}
     </ScrollView>
@@ -145,6 +153,9 @@ const styles = StyleSheet.create({
   },
   mapSection: {
     marginTop: spacing.small,
+  },
+  elevationSection: {
+    marginTop: spacing.medium,
   },
   sectionTitle: {
     fontSize: fontSize.title,

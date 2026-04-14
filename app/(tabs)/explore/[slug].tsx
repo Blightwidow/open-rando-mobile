@@ -3,6 +3,7 @@ import { useLocalSearchParams } from "expo-router";
 import { useRoute } from "@/hooks/use-catalog";
 import { DownloadButton } from "@/components/download-button";
 import { TrailMap } from "@/components/trail-map";
+import { ElevationChart } from "@/components/elevation-chart";
 import { useDownloadStore } from "@/stores/download-store";
 import { useOfflineRoute } from "@/hooks/use-offline-route";
 import { formatDistance, formatElevation } from "@/lib/format";
@@ -85,6 +86,13 @@ export default function RouteDetailScreen() {
         <View style={styles.mapSection}>
           <Text style={styles.sectionTitle}>{t("route.trailMap")}</Text>
           <TrailMap geoJson={offlineData.geoJson} bbox={route.bbox} pois={route.pois} />
+        </View>
+      )}
+
+      {offlineData.elevation && (
+        <View style={styles.elevationSection}>
+          <Text style={styles.sectionTitle}>{t("route.elevationProfile")}</Text>
+          <ElevationChart elevation={offlineData.elevation} />
         </View>
       )}
     </ScrollView>
@@ -190,6 +198,9 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   mapSection: {
+    marginTop: spacing.medium,
+  },
+  elevationSection: {
     marginTop: spacing.medium,
   },
   sectionTitle: {
