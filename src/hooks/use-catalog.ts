@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { syncCatalog } from "@/services/catalog-sync";
-import { getAllHikes, getHikeBySlug } from "@/services/database";
+import { getAllRoutes, getRouteBySlug } from "@/services/database";
 
 export function useCatalogSync() {
   const queryClient = useQueryClient();
@@ -9,24 +9,24 @@ export function useCatalogSync() {
     mutationFn: syncCatalog,
     onSuccess: (result) => {
       if (result.synced) {
-        queryClient.invalidateQueries({ queryKey: ["hikes"] });
+        queryClient.invalidateQueries({ queryKey: ["routes"] });
       }
     },
   });
 }
 
-export function useHikes() {
+export function useRoutes() {
   return useQuery({
-    queryKey: ["hikes"],
-    queryFn: getAllHikes,
+    queryKey: ["routes"],
+    queryFn: getAllRoutes,
     staleTime: 5 * 60 * 1000,
   });
 }
 
-export function useHike(slug: string) {
+export function useRoute(slug: string) {
   return useQuery({
-    queryKey: ["hike", slug],
-    queryFn: () => getHikeBySlug(slug),
+    queryKey: ["route", slug],
+    queryFn: () => getRouteBySlug(slug),
     enabled: !!slug,
   });
 }

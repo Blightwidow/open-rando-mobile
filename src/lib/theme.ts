@@ -10,6 +10,8 @@ export const colors = {
   error: "#d00000",
   easy: "#2d6a4f",
   moderate: "#e85d04",
+  difficult: "#d00000",
+  veryDifficult: "#6a040f",
   trailLine: "#e85d04",
   startMarker: "#2d6a4f",
   endMarker: "#d00000",

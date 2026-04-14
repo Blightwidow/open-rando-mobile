@@ -9,21 +9,21 @@ export async function fetchCatalog(): Promise<CatalogResponse> {
   return response.json();
 }
 
-export async function fetchGeoJson(hikeId: string): Promise<unknown> {
-  const response = await fetch(`${BASE_DATA_URL}/geojson/${hikeId}.json`);
+export async function fetchGeoJson(routeId: string): Promise<unknown> {
+  const response = await fetch(`${BASE_DATA_URL}/geojson/${routeId}.json`);
   if (!response.ok) {
-    throw new Error(`Failed to fetch GeoJSON for ${hikeId}: ${response.status}`);
+    throw new Error(`Failed to fetch GeoJSON for ${routeId}: ${response.status}`);
   }
   return response.json();
 }
 
 export async function fetchElevation(
-  hikeId: string,
+  routeId: string,
 ): Promise<ElevationProfile> {
-  const response = await fetch(`${BASE_DATA_URL}/elevation/${hikeId}.json`);
+  const response = await fetch(`${BASE_DATA_URL}/elevation/${routeId}.json`);
   if (!response.ok) {
     throw new Error(
-      `Failed to fetch elevation for ${hikeId}: ${response.status}`,
+      `Failed to fetch elevation for ${routeId}: ${response.status}`,
     );
   }
   return response.json();

@@ -1,9 +1,9 @@
 import { fetchCatalog } from "./api";
-import { getMetadataValue, setMetadataValue, upsertHikes } from "./database";
+import { getMetadataValue, setMetadataValue, upsertRoutes } from "./database";
 
 export interface SyncResult {
   synced: boolean;
-  hikeCount: number;
+  routeCount: number;
   generatedAt: string | null;
 }
 
@@ -16,24 +16,24 @@ export async function syncCatalog(): Promise<SyncResult> {
     if (storedGeneratedAt === catalog.generated_at) {
       return {
         synced: false,
-        hikeCount: catalog.hikes.length,
+        routeCount: catalog.routes.length,
         generatedAt: catalog.generated_at,
       };
     }
 
-    await upsertHikes(catalog.hikes);
+    await upsertRoutes(catalog.routes);
     await setMetadataValue("catalog_generated_at", catalog.generated_at);
 
     return {
       synced: true,
-      hikeCount: catalog.hikes.length,
+      routeCount: catalog.routes.length,
       generatedAt: catalog.generated_at,
     };
   } catch (error) {
     if (storedGeneratedAt) {
       return {
         synced: false,
-        hikeCount: 0,
+        routeCount: 0,
         generatedAt: storedGeneratedAt,
       };
     }

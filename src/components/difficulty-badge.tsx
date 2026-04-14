@@ -9,11 +9,15 @@ interface DifficultyBadgeProps {
 const difficultyColors: Record<Difficulty, string> = {
   easy: colors.easy,
   moderate: colors.moderate,
+  difficult: colors.difficult,
+  very_difficult: colors.veryDifficult,
 };
 
 const difficultyLabels: Record<Difficulty, string> = {
   easy: "Easy",
   moderate: "Moderate",
+  difficult: "Difficult",
+  very_difficult: "Very Difficult",
 };
 
 export function DifficultyBadge({ difficulty }: DifficultyBadgeProps) {

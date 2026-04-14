@@ -1,60 +1,54 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
-import type { Hike } from "@/lib/types";
-import { formatDistance, formatDuration, formatElevation } from "@/lib/format";
+import type { Route } from "@/lib/types";
+import { formatDistance, formatElevation } from "@/lib/format";
 import { colors, spacing, fontSize, borderRadius } from "@/lib/theme";
 import { DifficultyBadge } from "./difficulty-badge";
 import { useDownloadStore } from "@/stores/download-store";
 
-interface HikeCardProps {
-  hike: Hike;
+interface RouteCardProps {
+  route: Route;
 }
 
-export function HikeCard({ hike }: HikeCardProps) {
+export function RouteCard({ route }: RouteCardProps) {
   const router = useRouter();
   const downloadState = useDownloadStore((state) =>
-    state.getDownloadState(hike.id),
+    state.getDownloadState(route.id),
   );
 
   return (
     <Pressable
       style={styles.card}
-      onPress={() => router.push(`/explore/${hike.slug}`)}
+      onPress={() => router.push(`/explore/${route.slug}`)}
     >
       <View style={styles.header}>
         <View style={styles.pathBadge}>
-          <Text style={styles.pathBadgeText}>{hike.path_ref}</Text>
+          <Text style={styles.pathBadgeText}>{route.path_ref}</Text>
         </View>
-        <DifficultyBadge difficulty={hike.difficulty} />
+        <DifficultyBadge difficulty={route.difficulty} />
         {downloadState.status === "complete" && (
           <Text style={styles.downloadedIndicator}>✓</Text>
         )}
       </View>
 
-      <Text style={styles.stations} numberOfLines={1}>
-        {hike.start_station.name} → {hike.end_station.name}
-      </Text>
+      <Text style={styles.pathName}>{route.path_name}</Text>
 
-      {hike.region ? (
-        <Text style={styles.region}>{hike.region}</Text>
+      {route.description ? (
+        <Text style={styles.description} numberOfLines={2}>
+          {route.description}
+        </Text>
+      ) : null}
+
+      {route.region ? (
+        <Text style={styles.region}>{route.region}</Text>
       ) : null}
 
       <View style={styles.stats}>
-        <Text style={styles.stat}>{formatDistance(hike.distance_km)}</Text>
+        <Text style={styles.stat}>{formatDistance(route.distance_km)}</Text>
         <Text style={styles.statSeparator}>·</Text>
         <Text style={styles.stat}>
-          {formatDuration(hike.estimated_duration_min)}
+          ↑ {formatElevation(route.elevation_gain_m)}
         </Text>
-        <Text style={styles.statSeparator}>·</Text>
-        <Text style={styles.stat}>
-          ↑ {formatElevation(hike.elevation_gain_m)}
-        </Text>
-        {hike.step_count > 1 && (
-          <>
-            <Text style={styles.statSeparator}>·</Text>
-            <Text style={styles.stat}>{hike.step_count} steps</Text>
-          </>
-        )}
       </View>
     </Pressable>
   );
@@ -93,10 +87,15 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     marginLeft: "auto",
   },
-  stations: {
+  pathName: {
     fontSize: fontSize.subtitle,
     fontWeight: "600",
     color: colors.text,
+    marginBottom: 2,
+  },
+  description: {
+    fontSize: fontSize.body,
+    color: colors.textSecondary,
     marginBottom: 2,
   },
   region: {

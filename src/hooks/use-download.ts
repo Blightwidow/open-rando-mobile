@@ -1,21 +1,21 @@
 import { useCallback } from "react";
 import { useDownloadStore } from "@/stores/download-store";
-import type { Hike } from "@/lib/types";
+import type { Route } from "@/lib/types";
 
-export function useDownload(hike: Hike) {
+export function useDownload(route: Route) {
   const downloadState = useDownloadStore((state) =>
-    state.getDownloadState(hike.id),
+    state.getDownloadState(route.id),
   );
   const startDownload = useDownloadStore((state) => state.startDownload);
   const removeDownload = useDownloadStore((state) => state.removeDownload);
 
   const download = useCallback(() => {
-    startDownload(hike);
-  }, [hike, startDownload]);
+    startDownload(route);
+  }, [route, startDownload]);
 
   const remove = useCallback(() => {
-    removeDownload(hike.id);
-  }, [hike.id, removeDownload]);
+    removeDownload(route.id);
+  }, [route.id, removeDownload]);
 
   return {
     status: downloadState.status,

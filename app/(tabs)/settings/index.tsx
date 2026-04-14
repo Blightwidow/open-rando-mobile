@@ -13,7 +13,7 @@ export default function SettingsScreen() {
   const handleDeleteAll = () => {
     Alert.alert(
       "Delete All Downloads",
-      "Remove all downloaded hike data? This cannot be undone.",
+      "Remove all downloaded route data? This cannot be undone.",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -35,7 +35,7 @@ export default function SettingsScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Storage</Text>
         <View style={styles.row}>
-          <Text style={styles.label}>Downloaded hikes</Text>
+          <Text style={styles.label}>Downloaded routes</Text>
           <Text style={styles.value}>{downloadedCount}</Text>
         </View>
         {downloadedCount > 0 && (
