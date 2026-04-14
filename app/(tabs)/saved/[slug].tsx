@@ -6,16 +6,15 @@ import {
   View,
 } from "react-native";
 import { useLocalSearchParams } from "expo-router";
-import { useOfflineHike } from "@/hooks/use-offline-hike";
+import { useOfflineRoute } from "@/hooks/use-offline-route";
 import { TrailMap } from "@/components/trail-map";
-import { HikeStepsList } from "@/components/hike-steps-list";
-import { formatDistance, formatDuration, formatElevation } from "@/lib/format";
+import { formatDistance, formatElevation } from "@/lib/format";
 import { DifficultyBadge } from "@/components/difficulty-badge";
 import { colors, spacing, fontSize, borderRadius } from "@/lib/theme";
 
-export default function OfflineHikeDetailScreen() {
+export default function OfflineRouteDetailScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
-  const { hike, geoJson, isLoading, error } = useOfflineHike(slug);
+  const { route, geoJson, isLoading, error } = useOfflineRoute(slug);
 
   if (isLoading) {
     return (
@@ -25,10 +24,10 @@ export default function OfflineHikeDetailScreen() {
     );
   }
 
-  if (error || !hike) {
+  if (error || !route) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.errorText}>Failed to load hike</Text>
+        <Text style={styles.errorText}>Failed to load route</Text>
       </View>
     );
   }
@@ -37,28 +36,25 @@ export default function OfflineHikeDetailScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <View style={styles.pathBadge}>
-          <Text style={styles.pathBadgeText}>{hike.path_ref}</Text>
+          <Text style={styles.pathBadgeText}>{route.path_ref}</Text>
         </View>
-        <DifficultyBadge difficulty={hike.difficulty} />
+        <DifficultyBadge difficulty={route.difficulty} />
       </View>
 
-      <Text style={styles.stations}>
-        {hike.start_station.name} → {hike.end_station.name}
-      </Text>
+      <Text style={styles.pathName}>{route.path_name}</Text>
+      {route.description ? (
+        <Text style={styles.description}>{route.description}</Text>
+      ) : null}
 
       <View style={styles.statsGrid}>
-        <StatItem label="Distance" value={formatDistance(hike.distance_km)} />
-        <StatItem
-          label="Duration"
-          value={formatDuration(hike.estimated_duration_min)}
-        />
+        <StatItem label="Distance" value={formatDistance(route.distance_km)} />
         <StatItem
           label="Elevation ↑"
-          value={formatElevation(hike.elevation_gain_m)}
+          value={formatElevation(route.elevation_gain_m)}
         />
         <StatItem
           label="Elevation ↓"
-          value={formatElevation(hike.elevation_loss_m)}
+          value={formatElevation(route.elevation_loss_m)}
         />
       </View>
 
@@ -67,14 +63,11 @@ export default function OfflineHikeDetailScreen() {
           <Text style={styles.sectionTitle}>Trail Map</Text>
           <TrailMap
             geoJson={geoJson}
-            bbox={hike.bbox}
-            startStation={hike.start_station}
-            endStation={hike.end_station}
+            bbox={route.bbox}
+            pois={route.pois}
           />
         </View>
       )}
-
-      <HikeStepsList steps={hike.steps} />
     </ScrollView>
   );
 }
@@ -123,10 +116,15 @@ const styles = StyleSheet.create({
     fontSize: fontSize.body,
     fontWeight: "700",
   },
-  stations: {
-    fontSize: fontSize.header,
+  pathName: {
+    fontSize: fontSize.title,
     fontWeight: "700",
     color: colors.text,
+    marginBottom: 2,
+  },
+  description: {
+    fontSize: fontSize.body,
+    color: colors.textSecondary,
     marginBottom: spacing.medium,
   },
   statsGrid: {

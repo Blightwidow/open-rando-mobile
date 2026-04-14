@@ -1,14 +1,14 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import type { Hike } from "@/lib/types";
+import type { Route } from "@/lib/types";
 import { useDownload } from "@/hooks/use-download";
 import { colors, spacing, fontSize, borderRadius } from "@/lib/theme";
 
 interface DownloadButtonProps {
-  hike: Hike;
+  route: Route;
 }
 
-export function DownloadButton({ hike }: DownloadButtonProps) {
-  const { status, progress, error, download, remove } = useDownload(hike);
+export function DownloadButton({ route }: DownloadButtonProps) {
+  const { status, progress, error, download, remove } = useDownload(route);
 
   if (status === "complete") {
     return (

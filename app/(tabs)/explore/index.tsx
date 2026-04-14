@@ -1,11 +1,11 @@
 import { ActivityIndicator, FlatList, StyleSheet, Text, View } from "react-native";
-import { useHikes, useCatalogSync } from "@/hooks/use-catalog";
-import { HikeCard } from "@/components/hike-card";
+import { useRoutes, useCatalogSync } from "@/hooks/use-catalog";
+import { RouteCard } from "@/components/route-card";
 import { colors, spacing, fontSize } from "@/lib/theme";
-import type { Hike } from "@/lib/types";
+import type { Route } from "@/lib/types";
 
 export default function ExploreScreen() {
-  const { data: hikes, isLoading, error, refetch } = useHikes();
+  const { data: routes, isLoading, error, refetch } = useRoutes();
   const { mutate: syncCatalog, isPending: isSyncing } = useCatalogSync();
 
   const handleRefresh = () => {
@@ -26,16 +26,16 @@ export default function ExploreScreen() {
   if (error) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.errorText}>Failed to load hikes</Text>
+        <Text style={styles.errorText}>Failed to load routes</Text>
         <Text style={styles.errorDetail}>{error.message}</Text>
       </View>
     );
   }
 
-  if (!hikes || hikes.length === 0) {
+  if (!routes || routes.length === 0) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.emptyText}>No hikes available</Text>
+        <Text style={styles.emptyText}>No routes available</Text>
         <Text style={styles.emptyDetail}>
           Pull to refresh or check your connection
         </Text>
@@ -45,9 +45,9 @@ export default function ExploreScreen() {
 
   return (
     <FlatList
-      data={hikes}
-      keyExtractor={(item: Hike) => item.id}
-      renderItem={({ item }) => <HikeCard hike={item} />}
+      data={routes}
+      keyExtractor={(item: Route) => item.id}
+      renderItem={({ item }) => <RouteCard route={item} />}
       contentContainerStyle={styles.list}
       refreshing={isSyncing}
       onRefresh={handleRefresh}

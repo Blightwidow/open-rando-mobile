@@ -1,19 +1,19 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import type { DownloadState, Hike } from "@/lib/types";
+import type { DownloadState, Route } from "@/lib/types";
 import {
-  downloadHikeData,
-  deleteHikeData,
-  isHikeDownloaded,
+  downloadRouteData,
+  deleteRouteData,
+  isRouteDownloaded,
 } from "@/services/offline-storage";
 
 interface DownloadStore {
   downloads: Record<string, DownloadState>;
-  startDownload: (hike: Hike) => Promise<void>;
-  removeDownload: (hikeId: string) => void;
-  verifyDownload: (hikeId: string) => boolean;
-  getDownloadState: (hikeId: string) => DownloadState;
+  startDownload: (route: Route) => Promise<void>;
+  removeDownload: (routeId: string) => void;
+  verifyDownload: (routeId: string) => boolean;
+  getDownloadState: (routeId: string) => DownloadState;
 }
 
 const defaultState: DownloadState = { status: "idle", progress: 0 };
@@ -23,24 +23,24 @@ export const useDownloadStore = create<DownloadStore>()(
     (set, get) => ({
       downloads: {},
 
-      getDownloadState: (hikeId: string): DownloadState => {
-        return get().downloads[hikeId] ?? defaultState;
+      getDownloadState: (routeId: string): DownloadState => {
+        return get().downloads[routeId] ?? defaultState;
       },
 
-      startDownload: async (hike: Hike) => {
+      startDownload: async (route: Route) => {
         set((state) => ({
           downloads: {
             ...state.downloads,
-            [hike.id]: { status: "downloading", progress: 0 },
+            [route.id]: { status: "downloading", progress: 0 },
           },
         }));
 
         try {
-          await downloadHikeData(hike, (progress) => {
+          await downloadRouteData(route, (progress) => {
             set((state) => ({
               downloads: {
                 ...state.downloads,
-                [hike.id]: { status: "downloading", progress },
+                [route.id]: { status: "downloading", progress },
               },
             }));
           });
@@ -48,14 +48,14 @@ export const useDownloadStore = create<DownloadStore>()(
           set((state) => ({
             downloads: {
               ...state.downloads,
-              [hike.id]: { status: "complete", progress: 1 },
+              [route.id]: { status: "complete", progress: 1 },
             },
           }));
         } catch (error) {
           set((state) => ({
             downloads: {
               ...state.downloads,
-              [hike.id]: {
+              [route.id]: {
                 status: "error",
                 progress: 0,
                 error:
@@ -68,22 +68,22 @@ export const useDownloadStore = create<DownloadStore>()(
         }
       },
 
-      removeDownload: (hikeId: string) => {
-        deleteHikeData(hikeId);
+      removeDownload: (routeId: string) => {
+        deleteRouteData(routeId);
         set((state) => {
-          const { [hikeId]: _, ...remaining } = state.downloads;
+          const { [routeId]: _, ...remaining } = state.downloads;
           return { downloads: remaining };
         });
       },
 
-      verifyDownload: (hikeId: string): boolean => {
-        const stored = get().downloads[hikeId];
+      verifyDownload: (routeId: string): boolean => {
+        const stored = get().downloads[routeId];
         if (stored?.status !== "complete") return false;
 
-        const exists = isHikeDownloaded(hikeId);
+        const exists = isRouteDownloaded(routeId);
         if (!exists) {
           set((state) => {
-            const { [hikeId]: _, ...remaining } = state.downloads;
+            const { [routeId]: _, ...remaining } = state.downloads;
             return { downloads: remaining };
           });
         }

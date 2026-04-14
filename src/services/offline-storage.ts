@@ -1,36 +1,36 @@
 import { Paths, File, Directory } from "expo-file-system";
-import type { ElevationProfile, Hike } from "@/lib/types";
+import type { ElevationProfile, Route } from "@/lib/types";
 import { fetchElevation, fetchGeoJson } from "./api";
 
-const hikesDirectory = new Directory(Paths.document, "hikes");
+const routesDirectory = new Directory(Paths.document, "hikes");
 
-function hikeDirectory(hikeId: string): Directory {
-  return new Directory(hikesDirectory, hikeId);
+function routeDirectory(routeId: string): Directory {
+  return new Directory(routesDirectory, routeId);
 }
 
-function geoJsonFile(hikeId: string): File {
-  return new File(hikeDirectory(hikeId), "geojson.json");
+function geoJsonFile(routeId: string): File {
+  return new File(routeDirectory(routeId), "geojson.json");
 }
 
-function elevationFile(hikeId: string): File {
-  return new File(hikeDirectory(hikeId), "elevation.json");
+function elevationFile(routeId: string): File {
+  return new File(routeDirectory(routeId), "elevation.json");
 }
 
-export function ensureHikesDirectory(): void {
-  if (!hikesDirectory.exists) {
-    hikesDirectory.create();
+export function ensureRoutesDirectory(): void {
+  if (!routesDirectory.exists) {
+    routesDirectory.create();
   }
 }
 
-export function isHikeDownloaded(hikeId: string): boolean {
-  return geoJsonFile(hikeId).exists && elevationFile(hikeId).exists;
+export function isRouteDownloaded(routeId: string): boolean {
+  return geoJsonFile(routeId).exists && elevationFile(routeId).exists;
 }
 
-export async function downloadHikeData(
-  hike: Hike,
+export async function downloadRouteData(
+  route: Route,
   onProgress?: (progress: number) => void,
 ): Promise<void> {
-  const directory = hikeDirectory(hike.id);
+  const directory = routeDirectory(route.id);
   if (!directory.exists) {
     directory.create();
   }
@@ -38,14 +38,14 @@ export async function downloadHikeData(
   onProgress?.(0.1);
 
   const [geoJson, elevation] = await Promise.all([
-    fetchGeoJson(hike.id),
-    fetchElevation(hike.id),
+    fetchGeoJson(route.id),
+    fetchElevation(route.id),
   ]);
 
   onProgress?.(0.6);
 
-  const geoJsonTarget = geoJsonFile(hike.id);
-  const elevationTarget = elevationFile(hike.id);
+  const geoJsonTarget = geoJsonFile(route.id);
+  const elevationTarget = elevationFile(route.id);
 
   if (!geoJsonTarget.exists) {
     geoJsonTarget.create();
@@ -60,28 +60,28 @@ export async function downloadHikeData(
   onProgress?.(1.0);
 }
 
-export function deleteHikeData(hikeId: string): void {
-  const directory = hikeDirectory(hikeId);
+export function deleteRouteData(routeId: string): void {
+  const directory = routeDirectory(routeId);
   if (directory.exists) {
     directory.delete();
   }
 }
 
-export async function readGeoJson(hikeId: string): Promise<unknown> {
-  const content = await geoJsonFile(hikeId).text();
+export async function readGeoJson(routeId: string): Promise<unknown> {
+  const content = await geoJsonFile(routeId).text();
   return JSON.parse(content);
 }
 
 export async function readElevation(
-  hikeId: string,
+  routeId: string,
 ): Promise<ElevationProfile> {
-  const content = await elevationFile(hikeId).text();
+  const content = await elevationFile(routeId).text();
   return JSON.parse(content) as ElevationProfile;
 }
 
-export function getDownloadedHikeIds(): string[] {
-  ensureHikesDirectory();
-  const entries = hikesDirectory.list();
+export function getDownloadedRouteIds(): string[] {
+  ensureRoutesDirectory();
+  const entries = routesDirectory.list();
   const downloadedIds: string[] = [];
 
   for (const entry of entries) {

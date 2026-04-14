@@ -1,5 +1,5 @@
 import * as SQLite from "expo-sqlite";
-import type { Hike } from "@/lib/types";
+import type { Route } from "@/lib/types";
 
 let database: SQLite.SQLiteDatabase | null = null;
 
@@ -14,29 +14,29 @@ async function initializeDatabase(
   database: SQLite.SQLiteDatabase,
 ): Promise<void> {
   await database.execAsync(`
+    DROP TABLE IF EXISTS hikes;
+
     CREATE TABLE IF NOT EXISTS metadata (
       key TEXT PRIMARY KEY,
       value TEXT NOT NULL
     );
 
-    CREATE TABLE IF NOT EXISTS hikes (
+    CREATE TABLE IF NOT EXISTS routes (
       id TEXT PRIMARY KEY,
       slug TEXT UNIQUE NOT NULL,
       data TEXT NOT NULL,
       difficulty TEXT,
       distance_km REAL,
-      estimated_duration_min INTEGER,
       elevation_gain_m INTEGER,
       region TEXT,
       departement TEXT,
-      step_count INTEGER,
       path_ref TEXT,
       last_updated TEXT
     );
 
-    CREATE INDEX IF NOT EXISTS idx_hikes_difficulty ON hikes(difficulty);
-    CREATE INDEX IF NOT EXISTS idx_hikes_region ON hikes(region);
-    CREATE INDEX IF NOT EXISTS idx_hikes_distance ON hikes(distance_km);
+    CREATE INDEX IF NOT EXISTS idx_routes_difficulty ON routes(difficulty);
+    CREATE INDEX IF NOT EXISTS idx_routes_region ON routes(region);
+    CREATE INDEX IF NOT EXISTS idx_routes_distance ON routes(distance_km);
   `);
 }
 
@@ -60,65 +60,62 @@ export async function setMetadataValue(
   );
 }
 
-export async function upsertHikes(hikes: Hike[]): Promise<void> {
+export async function upsertRoutes(routes: Route[]): Promise<void> {
   const database = await getDatabase();
   await database.withTransactionAsync(async () => {
-    for (const hike of hikes) {
+    for (const route of routes) {
       await database.runAsync(
-        `INSERT OR REPLACE INTO hikes (
+        `INSERT OR REPLACE INTO routes (
           id, slug, data, difficulty, distance_km,
-          estimated_duration_min, elevation_gain_m, region,
-          departement, step_count, path_ref, last_updated
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          elevation_gain_m, region, departement, path_ref, last_updated
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          hike.id,
-          hike.slug,
-          JSON.stringify(hike),
-          hike.difficulty,
-          hike.distance_km,
-          hike.estimated_duration_min,
-          hike.elevation_gain_m,
-          hike.region,
-          hike.departement,
-          hike.step_count,
-          hike.path_ref,
-          hike.last_updated,
+          route.id,
+          route.slug,
+          JSON.stringify(route),
+          route.difficulty,
+          route.distance_km,
+          route.elevation_gain_m,
+          route.region,
+          route.departement,
+          route.path_ref,
+          route.last_updated,
         ],
       );
     }
   });
 }
 
-export async function getAllHikes(): Promise<Hike[]> {
+export async function getAllRoutes(): Promise<Route[]> {
   const database = await getDatabase();
   const rows = await database.getAllAsync<{ data: string }>(
-    "SELECT data FROM hikes ORDER BY path_ref, distance_km",
+    "SELECT data FROM routes ORDER BY path_ref, distance_km",
   );
-  return rows.map((row) => JSON.parse(row.data) as Hike);
+  return rows.map((row) => JSON.parse(row.data) as Route);
 }
 
-export async function getHikeBySlug(slug: string): Promise<Hike | null> {
+export async function getRouteBySlug(slug: string): Promise<Route | null> {
   const database = await getDatabase();
   const row = await database.getFirstAsync<{ data: string }>(
-    "SELECT data FROM hikes WHERE slug = ?",
+    "SELECT data FROM routes WHERE slug = ?",
     [slug],
   );
-  return row ? (JSON.parse(row.data) as Hike) : null;
+  return row ? (JSON.parse(row.data) as Route) : null;
 }
 
-export async function getHikeById(hikeId: string): Promise<Hike | null> {
+export async function getRouteById(routeId: string): Promise<Route | null> {
   const database = await getDatabase();
   const row = await database.getFirstAsync<{ data: string }>(
-    "SELECT data FROM hikes WHERE id = ?",
-    [hikeId],
+    "SELECT data FROM routes WHERE id = ?",
+    [routeId],
   );
-  return row ? (JSON.parse(row.data) as Hike) : null;
+  return row ? (JSON.parse(row.data) as Route) : null;
 }
 
-export async function getHikeCount(): Promise<number> {
+export async function getRouteCount(): Promise<number> {
   const database = await getDatabase();
   const result = await database.getFirstAsync<{ count: number }>(
-    "SELECT COUNT(*) as count FROM hikes",
+    "SELECT COUNT(*) as count FROM routes",
   );
   return result?.count ?? 0;
 }

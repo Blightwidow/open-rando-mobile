@@ -9,10 +9,10 @@ import {
 import { useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { useDownloadStore } from "@/stores/download-store";
-import { getHikeById } from "@/services/database";
-import { formatDistance, formatDuration } from "@/lib/format";
+import { getRouteById } from "@/services/database";
+import { formatDistance, formatElevation } from "@/lib/format";
 import { colors, spacing, fontSize, borderRadius } from "@/lib/theme";
-import type { Hike } from "@/lib/types";
+import type { Route } from "@/lib/types";
 
 export default function SavedScreen() {
   const router = useRouter();
@@ -23,29 +23,29 @@ export default function SavedScreen() {
     .filter(([, state]) => state.status === "complete")
     .map(([id]) => id);
 
-  const { data: hikes } = useQuery({
-    queryKey: ["saved-hikes", downloadedIds],
+  const { data: routes } = useQuery({
+    queryKey: ["saved-routes", downloadedIds],
     queryFn: async () => {
-      const results: Hike[] = [];
+      const results: Route[] = [];
       for (const id of downloadedIds) {
-        const hike = await getHikeById(id);
-        if (hike) results.push(hike);
+        const route = await getRouteById(id);
+        if (route) results.push(route);
       }
       return results;
     },
     enabled: downloadedIds.length > 0,
   });
 
-  const handleRemove = (hike: Hike) => {
+  const handleRemove = (route: Route) => {
     Alert.alert(
       "Remove Download",
-      `Remove offline data for "${hike.start_station.name} → ${hike.end_station.name}"?`,
+      `Remove offline data for "${route.path_name}"?`,
       [
         { text: "Cancel", style: "cancel" },
         {
           text: "Remove",
           style: "destructive",
-          onPress: () => removeDownload(hike.id),
+          onPress: () => removeDownload(route.id),
         },
       ],
     );
@@ -54,9 +54,9 @@ export default function SavedScreen() {
   if (downloadedIds.length === 0) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.emptyText}>No saved hikes</Text>
+        <Text style={styles.emptyText}>No saved routes</Text>
         <Text style={styles.emptyDetail}>
-          Download hikes from the Explore tab to use offline
+          Download routes from the Explore tab to use offline
         </Text>
       </View>
     );
@@ -64,7 +64,7 @@ export default function SavedScreen() {
 
   return (
     <FlatList
-      data={hikes ?? []}
+      data={routes ?? []}
       keyExtractor={(item) => item.id}
       contentContainerStyle={styles.list}
       renderItem={({ item }) => (
@@ -77,8 +77,8 @@ export default function SavedScreen() {
               <Text style={styles.pathBadgeText}>{item.path_ref}</Text>
             </View>
           </View>
-          <Text style={styles.stations} numberOfLines={1}>
-            {item.start_station.name} → {item.end_station.name}
+          <Text style={styles.pathName} numberOfLines={1}>
+            {item.path_name}
           </Text>
           <View style={styles.stats}>
             <Text style={styles.stat}>
@@ -86,7 +86,7 @@ export default function SavedScreen() {
             </Text>
             <Text style={styles.statSeparator}>·</Text>
             <Text style={styles.stat}>
-              {formatDuration(item.estimated_duration_min)}
+              ↑ {formatElevation(item.elevation_gain_m)}
             </Text>
           </View>
           <Pressable
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
     fontSize: fontSize.small,
     fontWeight: "700",
   },
-  stations: {
+  pathName: {
     fontSize: fontSize.subtitle,
     fontWeight: "600",
     color: colors.text,
