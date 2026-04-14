@@ -1,8 +1,10 @@
+import { useMemo } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useFilterStore } from "@/stores/filter-store";
 import { useDistinctRegions } from "@/hooks/use-catalog";
-import { colors, spacing, fontSize, borderRadius } from "@/lib/theme";
+import { spacing, fontSize, borderRadius } from "@/lib/theme";
+import { useColors } from "@/hooks/use-colors";
 import { t } from "@/lib/i18n";
 import type { Terrain } from "@/lib/types";
 
@@ -20,6 +22,7 @@ interface FilterSheetProps {
 }
 
 export function FilterSheet({ visible, onClose }: FilterSheetProps) {
+  const colors = useColors();
   const regions = useFilterStore((state) => state.regions);
   const terrains = useFilterStore((state) => state.terrains);
   const toggleRegion = useFilterStore((state) => state.toggleRegion);
@@ -27,6 +30,103 @@ export function FilterSheet({ visible, onClose }: FilterSheetProps) {
   const clearAll = useFilterStore((state) => state.clearAll);
   const activeFilterCount = useFilterStore((state) => state.activeFilterCount);
   const { data: availableRegions } = useDistinctRegions();
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          flex: 1,
+          backgroundColor: colors.background,
+        },
+        header: {
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          paddingHorizontal: spacing.medium,
+          paddingVertical: spacing.medium,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+        },
+        title: {
+          fontSize: fontSize.title,
+          fontWeight: "700",
+          color: colors.text,
+        },
+        headerActions: {
+          flexDirection: "row",
+          alignItems: "center",
+          gap: spacing.small,
+        },
+        clearButton: {
+          paddingHorizontal: spacing.small,
+          paddingVertical: spacing.extraSmall,
+        },
+        clearButtonText: {
+          fontSize: fontSize.body,
+          color: colors.primary,
+          fontWeight: "600",
+        },
+        closeButton: {
+          padding: spacing.extraSmall,
+        },
+        content: {
+          flex: 1,
+        },
+        contentContainer: {
+          padding: spacing.medium,
+        },
+        section: {
+          marginBottom: spacing.large,
+        },
+        sectionTitle: {
+          fontSize: fontSize.subtitle,
+          fontWeight: "600",
+          color: colors.text,
+          marginBottom: spacing.small,
+        },
+        chipRow: {
+          flexDirection: "row",
+          flexWrap: "wrap",
+          gap: spacing.small,
+        },
+        terrainChip: {
+          paddingHorizontal: spacing.medium,
+          paddingVertical: spacing.small,
+          borderRadius: 999,
+          borderWidth: 1,
+        },
+        terrainChipText: {
+          fontSize: fontSize.body,
+          fontWeight: "500",
+        },
+        regionChip: {
+          paddingHorizontal: spacing.medium,
+          paddingVertical: spacing.small,
+          borderRadius: borderRadius.medium,
+          borderWidth: 1,
+          borderColor: colors.border,
+          backgroundColor: colors.surface,
+          flexDirection: "row",
+          alignItems: "center",
+        },
+        regionChipSelected: {
+          backgroundColor: colors.primary,
+          borderColor: colors.primary,
+        },
+        regionChipText: {
+          fontSize: fontSize.body,
+          color: colors.textSecondary,
+        },
+        regionChipTextSelected: {
+          color: "#fff",
+          fontWeight: "600",
+        },
+        checkIcon: {
+          marginRight: spacing.extraSmall,
+        },
+      }),
+    [colors],
+  );
 
   const hasActiveFilters = activeFilterCount() > 0;
 
@@ -126,96 +226,3 @@ export function FilterSheet({ visible, onClose }: FilterSheetProps) {
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: spacing.medium,
-    paddingVertical: spacing.medium,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  title: {
-    fontSize: fontSize.title,
-    fontWeight: "700",
-    color: colors.text,
-  },
-  headerActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.small,
-  },
-  clearButton: {
-    paddingHorizontal: spacing.small,
-    paddingVertical: spacing.extraSmall,
-  },
-  clearButtonText: {
-    fontSize: fontSize.body,
-    color: colors.primary,
-    fontWeight: "600",
-  },
-  closeButton: {
-    padding: spacing.extraSmall,
-  },
-  content: {
-    flex: 1,
-  },
-  contentContainer: {
-    padding: spacing.medium,
-  },
-  section: {
-    marginBottom: spacing.large,
-  },
-  sectionTitle: {
-    fontSize: fontSize.subtitle,
-    fontWeight: "600",
-    color: colors.text,
-    marginBottom: spacing.small,
-  },
-  chipRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.small,
-  },
-  terrainChip: {
-    paddingHorizontal: spacing.medium,
-    paddingVertical: spacing.small,
-    borderRadius: 999,
-    borderWidth: 1,
-  },
-  terrainChipText: {
-    fontSize: fontSize.body,
-    fontWeight: "500",
-  },
-  regionChip: {
-    paddingHorizontal: spacing.medium,
-    paddingVertical: spacing.small,
-    borderRadius: borderRadius.medium,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  regionChipSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  regionChipText: {
-    fontSize: fontSize.body,
-    color: colors.textSecondary,
-  },
-  regionChipTextSelected: {
-    color: "#fff",
-    fontWeight: "600",
-  },
-  checkIcon: {
-    marginRight: spacing.extraSmall,
-  },
-});

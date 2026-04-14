@@ -4,6 +4,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import MapLibreGL from "@maplibre/maplibre-react-native";
 import { TILE_STYLE_URL } from "@/lib/constants";
 import { colors, fontSize, spacing, borderRadius } from "@/lib/theme";
+import { useColors } from "@/hooks/use-colors";
 import { t } from "@/lib/i18n";
 import { formatDistance } from "@/lib/format";
 import type { GpsPosition } from "@/stores/gps-store";
@@ -57,8 +58,83 @@ export function TrailMap({
   style,
   onPoiPanelHeightChange,
 }: TrailMapProps) {
+  const themeColors = useColors();
   const cameraRef = useRef<MapLibreGL.CameraRef>(null);
   const [selectedPoi, setSelectedPoi] = useState<SelectedPoi | null>(null);
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          height: 300,
+          borderRadius: 12,
+          overflow: "hidden",
+        },
+        map: {
+          flex: 1,
+        },
+        recenterButton: {
+          position: "absolute",
+          bottom: 16,
+          right: 16,
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          backgroundColor: themeColors.surface,
+          justifyContent: "center",
+          alignItems: "center",
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.25,
+          shadowRadius: 4,
+          elevation: 4,
+        },
+        poiPanel: {
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          backgroundColor: themeColors.surface,
+          borderTopLeftRadius: borderRadius.medium,
+          borderTopRightRadius: borderRadius.medium,
+          padding: spacing.medium,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.12,
+          shadowRadius: 6,
+          elevation: 8,
+        },
+        poiPanelHeader: {
+          flexDirection: "row",
+          alignItems: "flex-start",
+          gap: spacing.small,
+        },
+        poiPanelInfo: {
+          flex: 1,
+        },
+        poiPanelName: {
+          fontSize: fontSize.subtitle,
+          fontWeight: "700",
+          color: themeColors.text,
+        },
+        poiPanelType: {
+          fontSize: fontSize.small,
+          color: themeColors.textSecondary,
+          marginTop: 2,
+        },
+        poiPanelLink: {
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 4,
+          marginTop: spacing.small,
+        },
+        poiPanelLinkText: {
+          fontSize: fontSize.body,
+          color: themeColors.primary,
+        },
+      }),
+    [themeColors],
+  );
   const bounds = {
     ne: [bbox[2], bbox[3]] as [number, number],
     sw: [bbox[0], bbox[1]] as [number, number],
@@ -257,14 +333,14 @@ export function TrailMap({
               }}
               hitSlop={8}
             >
-              <Ionicons name="close" size={20} color={colors.textSecondary} />
+              <Ionicons name="close" size={20} color={themeColors.textSecondary} />
             </Pressable>
           </View>
           <Pressable
             style={styles.poiPanelLink}
             onPress={() => Linking.openURL(selectedPoi.url)}
           >
-            <Ionicons name="open-outline" size={14} color={colors.primary} />
+            <Ionicons name="open-outline" size={14} color={themeColors.primary} />
             <Text style={styles.poiPanelLinkText}>
               {selectedPoi.hasDirectUrl ? t("poi.viewLink") : t("poi.findOnMaps")}
             </Text>
@@ -275,72 +351,3 @@ export function TrailMap({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    height: 300,
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  map: {
-    flex: 1,
-  },
-  recenterButton: {
-    position: "absolute",
-    bottom: 16,
-    right: 16,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#fff",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  poiPanel: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: "#fff",
-    borderTopLeftRadius: borderRadius.medium,
-    borderTopRightRadius: borderRadius.medium,
-    padding: spacing.medium,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    elevation: 8,
-  },
-  poiPanelHeader: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: spacing.small,
-  },
-  poiPanelInfo: {
-    flex: 1,
-  },
-  poiPanelName: {
-    fontSize: fontSize.subtitle,
-    fontWeight: "700",
-    color: colors.text,
-  },
-  poiPanelType: {
-    fontSize: fontSize.small,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  poiPanelLink: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    marginTop: spacing.small,
-  },
-  poiPanelLinkText: {
-    fontSize: fontSize.body,
-    color: colors.primary,
-  },
-});
