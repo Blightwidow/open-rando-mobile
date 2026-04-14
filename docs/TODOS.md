@@ -1,0 +1,3 @@
+- [ ] AltStore support
+- [ ] FDroid support
+- [ ] Load section hike through QR Code
