@@ -8,8 +8,11 @@ import { useOfflineRoute } from "@/hooks/use-offline-route";
 import { formatDistance, formatElevation } from "@/lib/format";
 import { DifficultyBadge } from "@/components/difficulty-badge";
 import { colors, spacing, fontSize, borderRadius } from "@/lib/theme";
+import { t } from "@/lib/i18n";
+import { useLocale } from "@/hooks/use-locale";
 
 export default function RouteDetailScreen() {
+  useLocale();
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const { data: route, isLoading, error } = useRoute(slug);
   const downloadState = useDownloadStore((state) =>
@@ -28,7 +31,7 @@ export default function RouteDetailScreen() {
   if (error || !route) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.errorText}>Route not found</Text>
+        <Text style={styles.errorText}>{t("route.notFound")}</Text>
       </View>
     );
   }
@@ -51,17 +54,26 @@ export default function RouteDetailScreen() {
       {route.region ? <Text style={styles.region}>{route.region}</Text> : null}
 
       <View style={styles.statsGrid}>
-        <StatItem label="Distance" value={formatDistance(route.distance_km)} />
-        <StatItem label="Elevation ↑" value={formatElevation(route.elevation_gain_m)} />
-        <StatItem label="Elevation ↓" value={formatElevation(route.elevation_loss_m)} />
-        <StatItem label="Max altitude" value={formatElevation(route.max_elevation_m)} />
+        <StatItem label={t("route.distance")} value={formatDistance(route.distance_km)} />
+        <StatItem
+          label={t("route.elevationGain")}
+          value={formatElevation(route.elevation_gain_m)}
+        />
+        <StatItem
+          label={t("route.elevationLoss")}
+          value={formatElevation(route.elevation_loss_m)}
+        />
+        <StatItem
+          label={t("route.maxAltitude")}
+          value={formatElevation(route.max_elevation_m)}
+        />
       </View>
 
       {route.terrain.length > 0 && (
         <View style={styles.terrainRow}>
           {route.terrain.map((terrain) => (
             <View key={terrain} style={styles.terrainBadge}>
-              <Text style={styles.terrainText}>{terrain}</Text>
+              <Text style={styles.terrainText}>{t(`terrain.${terrain}`)}</Text>
             </View>
           ))}
         </View>
@@ -71,7 +83,7 @@ export default function RouteDetailScreen() {
 
       {showMap && (
         <View style={styles.mapSection}>
-          <Text style={styles.sectionTitle}>Trail Map</Text>
+          <Text style={styles.sectionTitle}>{t("route.trailMap")}</Text>
           <TrailMap geoJson={offlineData.geoJson} bbox={route.bbox} pois={route.pois} />
         </View>
       )}
@@ -176,7 +188,6 @@ const styles = StyleSheet.create({
   terrainText: {
     fontSize: fontSize.small,
     color: colors.textSecondary,
-    textTransform: "capitalize",
   },
   mapSection: {
     marginTop: spacing.medium,

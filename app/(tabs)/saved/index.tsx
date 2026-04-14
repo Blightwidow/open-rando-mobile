@@ -5,9 +5,12 @@ import { useDownloadStore } from "@/stores/download-store";
 import { getRouteById } from "@/services/database";
 import { formatDistance, formatElevation } from "@/lib/format";
 import { colors, spacing, fontSize, borderRadius } from "@/lib/theme";
+import { t } from "@/lib/i18n";
+import { useLocale } from "@/hooks/use-locale";
 import type { Route } from "@/lib/types";
 
 export default function SavedScreen() {
+  useLocale();
   const router = useRouter();
   const downloads = useDownloadStore((state) => state.downloads);
   const removeDownload = useDownloadStore((state) => state.removeDownload);
@@ -30,23 +33,25 @@ export default function SavedScreen() {
   });
 
   const handleRemove = (route: Route) => {
-    Alert.alert("Remove Download", `Remove offline data for "${route.path_name}"?`, [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Remove",
-        style: "destructive",
-        onPress: () => removeDownload(route.id),
-      },
-    ]);
+    Alert.alert(
+      t("saved.removeTitle"),
+      t("saved.removeMessage", { name: route.path_name }),
+      [
+        { text: t("settings.cancel"), style: "cancel" },
+        {
+          text: t("download.remove"),
+          style: "destructive",
+          onPress: () => removeDownload(route.id),
+        },
+      ],
+    );
   };
 
   if (downloadedIds.length === 0) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.emptyText}>No saved routes</Text>
-        <Text style={styles.emptyDetail}>
-          Download routes from the Explore tab to use offline
-        </Text>
+        <Text style={styles.emptyText}>{t("saved.empty")}</Text>
+        <Text style={styles.emptyDetail}>{t("saved.emptyDetail")}</Text>
       </View>
     );
   }
@@ -72,7 +77,7 @@ export default function SavedScreen() {
             <Text style={styles.stat}>↑ {formatElevation(item.elevation_gain_m)}</Text>
           </View>
           <Pressable style={styles.removeButton} onPress={() => handleRemove(item)}>
-            <Text style={styles.removeText}>Remove</Text>
+            <Text style={styles.removeText}>{t("download.remove")}</Text>
           </Pressable>
         </Pressable>
       )}

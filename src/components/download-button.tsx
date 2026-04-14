@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { Route } from "@/lib/types";
 import { useDownload } from "@/hooks/use-download";
 import { colors, spacing, fontSize, borderRadius } from "@/lib/theme";
+import { t } from "@/lib/i18n";
 
 interface DownloadButtonProps {
   route: Route;
@@ -14,10 +15,12 @@ export function DownloadButton({ route }: DownloadButtonProps) {
     return (
       <View style={styles.container}>
         <View style={[styles.button, styles.downloadedButton]}>
-          <Text style={[styles.buttonText, styles.downloadedText]}>✓ Downloaded</Text>
+          <Text style={[styles.buttonText, styles.downloadedText]}>
+            {t("download.complete")}
+          </Text>
         </View>
         <Pressable onPress={remove} style={styles.removeButton}>
-          <Text style={styles.removeText}>Remove</Text>
+          <Text style={styles.removeText}>{t("download.remove")}</Text>
         </Pressable>
       </View>
     );
@@ -31,7 +34,7 @@ export function DownloadButton({ route }: DownloadButtonProps) {
             <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
           </View>
           <Text style={styles.buttonText}>
-            Downloading... {Math.round(progress * 100)}%
+            {t("download.downloading", { progress: Math.round(progress * 100) })}
           </Text>
         </View>
       </View>
@@ -42,7 +45,7 @@ export function DownloadButton({ route }: DownloadButtonProps) {
     return (
       <View style={styles.container}>
         <Pressable style={[styles.button, styles.errorButton]} onPress={download}>
-          <Text style={[styles.buttonText, styles.errorText]}>Retry Download</Text>
+          <Text style={[styles.buttonText, styles.errorText]}>{t("download.retry")}</Text>
         </Pressable>
         {error && <Text style={styles.errorMessage}>{error}</Text>}
       </View>
@@ -52,7 +55,7 @@ export function DownloadButton({ route }: DownloadButtonProps) {
   return (
     <View style={styles.container}>
       <Pressable style={styles.button} onPress={download}>
-        <Text style={styles.buttonText}>Download for Offline</Text>
+        <Text style={styles.buttonText}>{t("download.idle")}</Text>
       </Pressable>
     </View>
   );

@@ -5,8 +5,11 @@ import { TrailMap } from "@/components/trail-map";
 import { formatDistance, formatElevation } from "@/lib/format";
 import { DifficultyBadge } from "@/components/difficulty-badge";
 import { colors, spacing, fontSize, borderRadius } from "@/lib/theme";
+import { t } from "@/lib/i18n";
+import { useLocale } from "@/hooks/use-locale";
 
 export default function OfflineRouteDetailScreen() {
+  useLocale();
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const { route, geoJson, isLoading, error } = useOfflineRoute(slug);
 
@@ -21,7 +24,7 @@ export default function OfflineRouteDetailScreen() {
   if (error || !route) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.errorText}>Failed to load route</Text>
+        <Text style={styles.errorText}>{t("saved.failedLoad")}</Text>
       </View>
     );
   }
@@ -41,14 +44,20 @@ export default function OfflineRouteDetailScreen() {
       ) : null}
 
       <View style={styles.statsGrid}>
-        <StatItem label="Distance" value={formatDistance(route.distance_km)} />
-        <StatItem label="Elevation ↑" value={formatElevation(route.elevation_gain_m)} />
-        <StatItem label="Elevation ↓" value={formatElevation(route.elevation_loss_m)} />
+        <StatItem label={t("route.distance")} value={formatDistance(route.distance_km)} />
+        <StatItem
+          label={t("route.elevationGain")}
+          value={formatElevation(route.elevation_gain_m)}
+        />
+        <StatItem
+          label={t("route.elevationLoss")}
+          value={formatElevation(route.elevation_loss_m)}
+        />
       </View>
 
       {geoJson != null && (
         <View style={styles.mapSection}>
-          <Text style={styles.sectionTitle}>Trail Map</Text>
+          <Text style={styles.sectionTitle}>{t("route.trailMap")}</Text>
           <TrailMap geoJson={geoJson} bbox={route.bbox} pois={route.pois} />
         </View>
       )}

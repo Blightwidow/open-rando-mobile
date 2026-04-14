@@ -2,9 +2,12 @@ import { ActivityIndicator, FlatList, StyleSheet, Text, View } from "react-nativ
 import { useRoutes, useCatalogSync } from "@/hooks/use-catalog";
 import { RouteCard } from "@/components/route-card";
 import { colors, spacing, fontSize } from "@/lib/theme";
+import { t } from "@/lib/i18n";
+import { useLocale } from "@/hooks/use-locale";
 import type { Route } from "@/lib/types";
 
 export default function ExploreScreen() {
+  useLocale();
   const { data: routes, isLoading, error, refetch } = useRoutes();
   const { mutate: syncCatalog, isPending: isSyncing } = useCatalogSync();
 
@@ -18,7 +21,7 @@ export default function ExploreScreen() {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Loading catalog...</Text>
+        <Text style={styles.loadingText}>{t("explore.loading")}</Text>
       </View>
     );
   }
@@ -26,7 +29,7 @@ export default function ExploreScreen() {
   if (error) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.errorText}>Failed to load routes</Text>
+        <Text style={styles.errorText}>{t("explore.error")}</Text>
         <Text style={styles.errorDetail}>{error.message}</Text>
       </View>
     );
@@ -35,8 +38,8 @@ export default function ExploreScreen() {
   if (!routes || routes.length === 0) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.emptyText}>No routes available</Text>
-        <Text style={styles.emptyDetail}>Pull to refresh or check your connection</Text>
+        <Text style={styles.emptyText}>{t("explore.empty")}</Text>
+        <Text style={styles.emptyDetail}>{t("explore.emptyDetail")}</Text>
       </View>
     );
   }
