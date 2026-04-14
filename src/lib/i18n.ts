@@ -75,6 +75,35 @@ const translations: Record<Locale, Record<string, string>> = {
     "terrain.mountain": "Montagne",
     "terrain.plains": "Plaines",
     "terrain.forest": "Forêt",
+
+    // Filters
+    "filters.title": "Filtres",
+    "filters.region": "Région",
+    "filters.terrain": "Terrain",
+    "filters.clear": "Réinitialiser",
+    "filters.noResults": "Aucune randonnée ne correspond aux filtres",
+
+    // POI types
+    "poi.train_station": "Gare",
+    "poi.bus_stop": "Arrêt de bus",
+    "poi.camping": "Camping",
+    "poi.hotel": "Hébergement",
+    "poi.viewLink": "Voir les horaires / infos",
+    "poi.findOnMaps": "Rechercher sur Google Maps",
+    "poi.distanceFromStart": "depuis le départ",
+
+    // GPS
+    "gps.permissionRequired":
+      "L'accès à la localisation est nécessaire pour afficher votre position sur la carte.",
+    "gps.permissionDenied":
+      "L'accès à la localisation a été refusé. Activez-le dans les réglages de votre appareil.",
+    "gps.searching": "Recherche du signal GPS…",
+
+    // Follow route
+    "tabs.active": "En cours",
+    "active.title": "Suivre l'itinéraire",
+    "active.stop": "Arrêter",
+    "route.followRoute": "Suivre cet itinéraire",
   },
   en: {
     // Tabs
@@ -146,6 +175,35 @@ const translations: Record<Locale, Record<string, string>> = {
     "terrain.mountain": "Mountain",
     "terrain.plains": "Plains",
     "terrain.forest": "Forest",
+
+    // Filters
+    "filters.title": "Filters",
+    "filters.region": "Region",
+    "filters.terrain": "Terrain",
+    "filters.clear": "Clear All",
+    "filters.noResults": "No routes match the selected filters",
+
+    // POI types
+    "poi.train_station": "Train Station",
+    "poi.bus_stop": "Bus Stop",
+    "poi.camping": "Camping",
+    "poi.hotel": "Accommodation",
+    "poi.viewLink": "View timetable / info",
+    "poi.findOnMaps": "Search on Google Maps",
+    "poi.distanceFromStart": "from start",
+
+    // GPS
+    "gps.permissionRequired":
+      "Location access is needed to show your position on the trail map.",
+    "gps.permissionDenied":
+      "Location access was denied. Enable it in your device settings.",
+    "gps.searching": "Searching for GPS signal…",
+
+    // Follow route
+    "tabs.active": "Active",
+    "active.title": "Follow Route",
+    "active.stop": "Stop",
+    "route.followRoute": "Follow this route",
   },
 };
 

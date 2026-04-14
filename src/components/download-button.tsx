@@ -9,21 +9,10 @@ interface DownloadButtonProps {
 }
 
 export function DownloadButton({ route }: DownloadButtonProps) {
-  const { status, progress, error, download, remove } = useDownload(route);
+  const { status, progress, error, download } = useDownload(route);
 
   if (status === "complete") {
-    return (
-      <View style={styles.container}>
-        <View style={[styles.button, styles.downloadedButton]}>
-          <Text style={[styles.buttonText, styles.downloadedText]}>
-            {t("download.complete")}
-          </Text>
-        </View>
-        <Pressable onPress={remove} style={styles.removeButton}>
-          <Text style={styles.removeText}>{t("download.remove")}</Text>
-        </Pressable>
-      </View>
-    );
+    return null;
   }
 
   if (status === "downloading") {
@@ -78,12 +67,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.subtitle,
     fontWeight: "600",
   },
-  downloadedButton: {
-    backgroundColor: colors.success,
-  },
-  downloadedText: {
-    color: "#fff",
-  },
   downloadingButton: {
     backgroundColor: colors.primaryLight,
   },
@@ -100,14 +83,6 @@ const styles = StyleSheet.create({
   progressFill: {
     height: "100%",
     backgroundColor: colors.primary,
-  },
-  removeButton: {
-    alignItems: "center",
-    paddingVertical: spacing.small,
-  },
-  removeText: {
-    color: colors.error,
-    fontSize: fontSize.body,
   },
   errorMessage: {
     color: colors.error,
