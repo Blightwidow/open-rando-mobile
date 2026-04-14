@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { Text } from "react-native";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { colors } from "@/lib/theme";
 import { t } from "@/lib/i18n";
 import { useLocale } from "@/hooks/use-locale";
@@ -19,7 +19,9 @@ export default function TabLayout() {
         options={{
           title: t("tabs.explore"),
           headerShown: false,
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>🥾</Text>,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="compass-outline" size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -27,14 +29,18 @@ export default function TabLayout() {
         options={{
           title: t("tabs.saved"),
           headerShown: false,
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>📥</Text>,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="download-outline" size={size} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
           title: t("tabs.settings"),
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>⚙️</Text>,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="settings-outline" size={size} color={color} />
+          ),
         }}
       />
     </Tabs>
