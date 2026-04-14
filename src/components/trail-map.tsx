@@ -350,4 +350,3 @@ export function TrailMap({
     </View>
   );
 }
-
