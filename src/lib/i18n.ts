@@ -60,7 +60,7 @@ const translations: Record<Locale, Record<string, string>> = {
     "settings.about": "À propos",
     "settings.version": "Version",
     "settings.description":
-      "Application compagnon pour open-rando — randonnées hors-ligne entre gares sur les sentiers GR français.",
+      "Application compagnon pour TrainRando — randonnées hors-ligne entre gares sur les sentiers GR français.",
     "settings.language": "Langue",
 
     // Difficulty
@@ -131,7 +131,7 @@ const translations: Record<Locale, Record<string, string>> = {
     "settings.about": "About",
     "settings.version": "Version",
     "settings.description":
-      "Companion app for open-rando — offline hiking between train stations on French GR trails.",
+      "Companion app for TrainRando — offline hiking between train stations on French GR trails.",
     "settings.language": "Language",
 
     // Difficulty
