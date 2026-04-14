@@ -17,7 +17,7 @@ Target: 8-10 weeks. Ship to TestFlight / internal testing.
 | 5   | **GPS position overlay**      | Live blue dot on trail map (foreground only, no recording)                                  |
 | 6   | **Elevation profile**         | Interactive SVG chart with step boundaries                                                  |
 | 7   | **i18n (FR/EN)**              | Port full translation dictionary from web project                                           |
-| 8   | **Dark mode**                 | Respect system setting                                                                      |
+| 8   | **Dark mode**                 | Respect system setting + manual override toggle in Settings (Light / System / Dark)         |
 
 ## Phase 2 — Enhanced Experience
 

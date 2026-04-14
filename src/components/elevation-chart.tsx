@@ -1,7 +1,8 @@
 import { useMemo, useState, useRef } from "react";
 import { StyleSheet, View, useWindowDimensions, PanResponder, Text } from "react-native";
 import Svg, { Path, Line, Rect, G, Text as SvgText } from "react-native-svg";
-import { colors, spacing, fontSize as themeFontSize } from "@/lib/theme";
+import { spacing, fontSize as themeFontSize } from "@/lib/theme";
+import { useColors } from "@/hooks/use-colors";
 import type { ElevationProfile } from "@/lib/types";
 
 const PADDING_LEFT = 45;
@@ -17,6 +18,7 @@ interface ElevationChartProps {
 
 export function ElevationChart({ elevation }: ElevationChartProps) {
   const { width: screenWidth } = useWindowDimensions();
+  const colors = useColors();
   const chartWidth = screenWidth - 2 * spacing.medium;
   const [cursorIndex, setCursorIndex] = useState<number | null>(null);
 
@@ -154,6 +156,31 @@ export function ElevationChart({ elevation }: ElevationChartProps) {
     }),
   ).current;
 
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          position: "relative",
+        },
+        tooltip: {
+          position: "absolute",
+          top: 0,
+          right: 0,
+          backgroundColor: colors.surface,
+          borderRadius: 4,
+          paddingHorizontal: spacing.small,
+          paddingVertical: 2,
+          zIndex: 1,
+        },
+        tooltipText: {
+          fontSize: themeFontSize.small,
+          color: colors.text,
+          fontWeight: "600",
+        },
+      }),
+    [colors],
+  );
+
   if (distances.length === 0) return null;
 
   const cursorDistance = cursorIndex != null ? distances[cursorIndex]! : null;
@@ -282,24 +309,3 @@ export function ElevationChart({ elevation }: ElevationChartProps) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    position: "relative",
-  },
-  tooltip: {
-    position: "absolute",
-    top: 0,
-    right: 0,
-    backgroundColor: colors.surface,
-    borderRadius: 4,
-    paddingHorizontal: spacing.small,
-    paddingVertical: 2,
-    zIndex: 1,
-  },
-  tooltipText: {
-    fontSize: themeFontSize.small,
-    color: colors.text,
-    fontWeight: "600",
-  },
-});

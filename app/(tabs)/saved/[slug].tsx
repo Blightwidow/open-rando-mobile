@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -17,12 +18,14 @@ import { TrailMap } from "@/components/trail-map";
 import { ElevationChart } from "@/components/elevation-chart";
 import { formatDistance, formatElevation } from "@/lib/format";
 import { DifficultyBadge } from "@/components/difficulty-badge";
-import { colors, spacing, fontSize, borderRadius } from "@/lib/theme";
+import { spacing, fontSize, borderRadius } from "@/lib/theme";
+import { useColors } from "@/hooks/use-colors";
 import { t } from "@/lib/i18n";
 import { useLocale } from "@/hooks/use-locale";
 
 export default function OfflineRouteDetailScreen() {
   useLocale();
+  const colors = useColors();
   const router = useRouter();
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const { route, geoJson, elevation, isLoading, error } = useOfflineRoute(slug);
@@ -30,6 +33,125 @@ export default function OfflineRouteDetailScreen() {
   const { request: requestLocationPermission } = useLocationPermission();
   const startFollowing = useGpsStore((state) => state.startFollowing);
   const isTracking = useGpsStore((state) => state.isTracking);
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          flex: 1,
+          backgroundColor: colors.background,
+        },
+        content: {
+          padding: spacing.medium,
+          paddingBottom: spacing.extraLarge,
+        },
+        centered: {
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+        },
+        errorText: {
+          fontSize: fontSize.title,
+          color: colors.error,
+        },
+        header: {
+          flexDirection: "row",
+          alignItems: "center",
+          gap: spacing.small,
+          marginBottom: spacing.small,
+          flex: 1,
+        },
+        downloadedLabel: {
+          marginLeft: "auto",
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 4,
+        },
+        downloadedLabelText: {
+          fontSize: fontSize.small,
+          color: colors.textSecondary,
+        },
+        pathBadge: {
+          backgroundColor: colors.primary,
+          borderRadius: borderRadius.small,
+          paddingHorizontal: spacing.small,
+          paddingVertical: 2,
+        },
+        pathBadgeText: {
+          color: "#fff",
+          fontSize: fontSize.body,
+          fontWeight: "700",
+        },
+        pathName: {
+          fontSize: fontSize.title,
+          fontWeight: "700",
+          color: colors.text,
+          marginBottom: 2,
+        },
+        description: {
+          fontSize: fontSize.body,
+          color: colors.textSecondary,
+          marginBottom: spacing.medium,
+        },
+        statsGrid: {
+          flexDirection: "row",
+          flexWrap: "wrap",
+          gap: spacing.small,
+          marginBottom: spacing.medium,
+        },
+        statItem: {
+          backgroundColor: colors.surface,
+          borderRadius: borderRadius.medium,
+          padding: spacing.small,
+          minWidth: "30%",
+          flex: 1,
+        },
+        statLabel: {
+          fontSize: fontSize.small,
+          color: colors.textSecondary,
+          marginBottom: 2,
+        },
+        statValue: {
+          fontSize: fontSize.subtitle,
+          fontWeight: "600",
+          color: colors.text,
+        },
+        mapSection: {
+          marginTop: spacing.small,
+        },
+        elevationSection: {
+          marginTop: spacing.medium,
+        },
+        sectionTitle: {
+          fontSize: fontSize.title,
+          fontWeight: "700",
+          color: colors.text,
+          marginBottom: spacing.small,
+        },
+        startHikeButton: {
+          backgroundColor: colors.success,
+          borderRadius: borderRadius.medium,
+          paddingVertical: spacing.small + 2,
+          alignItems: "center",
+          marginBottom: spacing.small,
+        },
+        startHikeText: {
+          color: "#fff",
+          fontSize: fontSize.subtitle,
+          fontWeight: "700",
+        },
+      }),
+    [colors],
+  );
+
+  function StatItem({ label, value }: { label: string; value: string }) {
+    return (
+      <View style={styles.statItem}>
+        <Text style={styles.statLabel}>{label}</Text>
+        <Text style={styles.statValue}>{value}</Text>
+      </View>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -114,118 +236,3 @@ export default function OfflineRouteDetailScreen() {
     </ScrollView>
   );
 }
-
-function StatItem({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.statItem}>
-      <Text style={styles.statLabel}>{label}</Text>
-      <Text style={styles.statValue}>{value}</Text>
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  content: {
-    padding: spacing.medium,
-    paddingBottom: spacing.extraLarge,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  errorText: {
-    fontSize: fontSize.title,
-    color: colors.error,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.small,
-    marginBottom: spacing.small,
-    flex: 1,
-  },
-  downloadedLabel: {
-    marginLeft: "auto",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  downloadedLabelText: {
-    fontSize: fontSize.small,
-    color: colors.textSecondary,
-  },
-  pathBadge: {
-    backgroundColor: colors.primary,
-    borderRadius: borderRadius.small,
-    paddingHorizontal: spacing.small,
-    paddingVertical: 2,
-  },
-  pathBadgeText: {
-    color: "#fff",
-    fontSize: fontSize.body,
-    fontWeight: "700",
-  },
-  pathName: {
-    fontSize: fontSize.title,
-    fontWeight: "700",
-    color: colors.text,
-    marginBottom: 2,
-  },
-  description: {
-    fontSize: fontSize.body,
-    color: colors.textSecondary,
-    marginBottom: spacing.medium,
-  },
-  statsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.small,
-    marginBottom: spacing.medium,
-  },
-  statItem: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.medium,
-    padding: spacing.small,
-    minWidth: "30%",
-    flex: 1,
-  },
-  statLabel: {
-    fontSize: fontSize.small,
-    color: colors.textSecondary,
-    marginBottom: 2,
-  },
-  statValue: {
-    fontSize: fontSize.subtitle,
-    fontWeight: "600",
-    color: colors.text,
-  },
-  mapSection: {
-    marginTop: spacing.small,
-  },
-  elevationSection: {
-    marginTop: spacing.medium,
-  },
-  sectionTitle: {
-    fontSize: fontSize.title,
-    fontWeight: "700",
-    color: colors.text,
-    marginBottom: spacing.small,
-  },
-  startHikeButton: {
-    backgroundColor: colors.success,
-    borderRadius: borderRadius.medium,
-    paddingVertical: spacing.small + 2,
-    alignItems: "center",
-    marginBottom: spacing.small,
-  },
-  startHikeText: {
-    color: "#fff",
-    fontSize: fontSize.subtitle,
-    fontWeight: "700",
-  },
-});
