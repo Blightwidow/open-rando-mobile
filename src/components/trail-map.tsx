@@ -107,7 +107,11 @@ export function TrailMap({
     };
   }, [userPosition]);
 
-  const handlePoiPress = (event: Parameters<NonNullable<React.ComponentProps<typeof MapLibreGL.ShapeSource>["onPress"]>>[0]) => {
+  const handlePoiPress = (
+    event: Parameters<
+      NonNullable<React.ComponentProps<typeof MapLibreGL.ShapeSource>["onPress"]>
+    >[0],
+  ) => {
     const feature = event.features?.[0];
     if (!feature?.properties) return;
     const props = feature.properties as Record<string, unknown>;
@@ -138,7 +142,10 @@ export function TrailMap({
         logoEnabled={false}
         attributionEnabled={true}
         attributionPosition={{ bottom: 8, right: 8 }}
-        onPress={() => { setSelectedPoi(null); onPoiPanelHeightChange?.(0); }}
+        onPress={() => {
+          setSelectedPoi(null);
+          onPoiPanelHeightChange?.(0);
+        }}
       >
         <MapLibreGL.Camera
           ref={cameraRef}
@@ -239,11 +246,17 @@ export function TrailMap({
             <View style={styles.poiPanelInfo}>
               <Text style={styles.poiPanelName}>{selectedPoi.name}</Text>
               <Text style={styles.poiPanelType}>
-                {t(`poi.${selectedPoi.poiType}`)} · {formatDistance(selectedPoi.distanceKm)}{" "}
-                {t("poi.distanceFromStart")}
+                {t(`poi.${selectedPoi.poiType}`)} ·{" "}
+                {formatDistance(selectedPoi.distanceKm)} {t("poi.distanceFromStart")}
               </Text>
             </View>
-            <Pressable onPress={() => { setSelectedPoi(null); onPoiPanelHeightChange?.(0); }} hitSlop={8}>
+            <Pressable
+              onPress={() => {
+                setSelectedPoi(null);
+                onPoiPanelHeightChange?.(0);
+              }}
+              hitSlop={8}
+            >
               <Ionicons name="close" size={20} color={colors.textSecondary} />
             </Pressable>
           </View>

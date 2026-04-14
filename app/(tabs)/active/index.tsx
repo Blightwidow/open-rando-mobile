@@ -51,7 +51,10 @@ export default function FollowRouteScreen() {
         </View>
       )}
 
-      <Pressable style={[styles.stopButton, { bottom: 16 + poiPanelHeight }]} onPress={stopFollowing}>
+      <Pressable
+        style={[styles.stopButton, { bottom: 16 + poiPanelHeight }]}
+        onPress={stopFollowing}
+      >
         <Ionicons name="stop" size={22} color="#fff" />
       </Pressable>
     </View>
