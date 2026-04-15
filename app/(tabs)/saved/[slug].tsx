@@ -1,5 +1,13 @@
 import { useMemo } from "react";
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useOfflineRoute } from "@/hooks/use-offline-route";
@@ -22,8 +30,8 @@ export default function OfflineRouteDetailScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const { route, geoJson, elevation, isLoading, error } = useOfflineRoute(slug);
   const removeDownload = useDownloadStore((state) => state.removeDownload);
-  const downloadMapStyle = useDownloadStore(
-    (state) => route?.id ? state.getDownloadState(route.id).mapStyle : undefined,
+  const downloadMapStyle = useDownloadStore((state) =>
+    route?.id ? state.getDownloadState(route.id).mapStyle : undefined,
   );
   const { request: requestLocationPermission } = useLocationPermission();
   const startFollowing = useGpsStore((state) => state.startFollowing);

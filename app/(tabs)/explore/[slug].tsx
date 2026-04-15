@@ -280,7 +280,12 @@ export default function RouteDetailScreen() {
       {showMap && (
         <View style={styles.mapSection}>
           <Text style={styles.sectionTitle}>{t("route.trailMap")}</Text>
-          <TrailMap geoJson={offlineData.geoJson} bbox={route.bbox} pois={route.pois} mapStyle={downloadMapStyle} />
+          <TrailMap
+            geoJson={offlineData.geoJson}
+            bbox={route.bbox}
+            pois={route.pois}
+            mapStyle={downloadMapStyle}
+          />
         </View>
       )}
 

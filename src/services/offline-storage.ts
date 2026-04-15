@@ -2,7 +2,11 @@ import { Paths, File, Directory } from "expo-file-system";
 import MapLibreGL from "@maplibre/maplibre-react-native";
 import type { ElevationProfile, Route } from "@/lib/types";
 import type { MapStyle } from "@/lib/constants";
-import { tileStyleUrl, OFFLINE_TILE_MIN_ZOOM, OFFLINE_TILE_MAX_ZOOM } from "@/lib/constants";
+import {
+  tileStyleUrl,
+  OFFLINE_TILE_MIN_ZOOM,
+  OFFLINE_TILE_MAX_ZOOM,
+} from "@/lib/constants";
 import { fetchElevation, fetchGeoJson } from "./api";
 import { logInfo, logDebug, logError } from "@/lib/logger";
 
@@ -94,7 +98,10 @@ export async function downloadRouteData(
   mapStyle: MapStyle,
   onProgress?: (progress: number) => void,
 ): Promise<void> {
-  logInfo("offline-storage", `Downloading route data for ${route.id} (style: ${mapStyle})`);
+  logInfo(
+    "offline-storage",
+    `Downloading route data for ${route.id} (style: ${mapStyle})`,
+  );
   const directory = routeDirectory(route.id);
   if (!directory.exists) {
     directory.create();

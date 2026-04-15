@@ -24,8 +24,8 @@ export default function FollowRouteScreen() {
   const stopFollowing = useGpsStore((state) => state.stopFollowing);
 
   const activeRouteId = useGpsStore((state) => state.activeRouteId);
-  const downloadMapStyle = useDownloadStore(
-    (state) => activeRouteId ? state.getDownloadState(activeRouteId).mapStyle : undefined,
+  const downloadMapStyle = useDownloadStore((state) =>
+    activeRouteId ? state.getDownloadState(activeRouteId).mapStyle : undefined,
   );
   const { route, geoJson } = useOfflineRoute(activeRouteSlug ?? "");
   const [poiPanelHeight, setPoiPanelHeight] = useState(0);
