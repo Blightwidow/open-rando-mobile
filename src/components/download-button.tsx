@@ -1,4 +1,6 @@
+import { useEffect, useRef } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import Toast from "react-native-toast-message";
 import type { Route } from "@/lib/types";
 import { useDownload } from "@/hooks/use-download";
 import { colors, spacing, fontSize, borderRadius } from "@/lib/theme";
@@ -10,6 +12,19 @@ interface DownloadButtonProps {
 
 export function DownloadButton({ route }: DownloadButtonProps) {
   const { status, progress, error, download } = useDownload(route);
+  const prevStatusRef = useRef(status);
+
+  useEffect(() => {
+    if (prevStatusRef.current === "downloading" && status === "error") {
+      Toast.show({
+        type: "error",
+        text1: t("toast.downloadError"),
+        text2: error,
+        visibilityTime: 4000,
+      });
+    }
+    prevStatusRef.current = status;
+  }, [status, error]);
 
   if (status === "complete") {
     return null;

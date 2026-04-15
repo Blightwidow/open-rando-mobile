@@ -57,3 +57,12 @@ export interface DownloadState {
   progress: number;
   error?: string;
 }
+
+export interface SectionEntry {
+  sectionId: string;
+  routeId: string;
+  slug: string;
+  fromKm: number;
+  toKm: number;
+  savedAt: string;
+}

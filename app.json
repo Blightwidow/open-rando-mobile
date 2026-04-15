@@ -17,7 +17,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "fr.dammaretz.trainrando",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "TrainRando uses your location to show your position on the trail map during a hike."
+        "NSLocationWhenInUseUsageDescription": "TrainRando uses your location to show your position on the trail map during a hike.",
+        "NSCameraUsageDescription": "TrainRando uses the camera to scan QR codes for hiking route sections."
       }
     },
     "android": {
@@ -36,6 +37,7 @@
       "expo-router",
       "expo-sqlite",
       "expo-file-system",
+      "expo-camera",
       "@maplibre/maplibre-react-native",
       [
         "expo-location",

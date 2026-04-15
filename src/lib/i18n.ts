@@ -108,6 +108,31 @@ const translations: Record<Locale, Record<string, string>> = {
     "active.title": "Suivre l'itinéraire",
     "active.stop": "Arrêter",
     "route.followRoute": "Suivre cet itinéraire",
+
+    // Toast
+    "toast.catalogSynced": "Catalogue mis à jour",
+    "toast.catalogError": "Impossible de charger le catalogue",
+    "toast.downloadError": "Échec du téléchargement",
+    "toast.sectionDownloadStarted": "Téléchargement lancé",
+    "toast.sectionInvalidQr": "QR code invalide",
+    "toast.sectionNotFound": "Randonnée introuvable dans le catalogue",
+    "toast.sectionAlreadySaved": "Section déjà sauvegardée",
+
+    // QR scan
+    "scan.title": "Scanner un QR code",
+    "scan.permission":
+      "Autorisez l'accès à la caméra pour scanner un QR code de randonnée.",
+    "scan.openSettings": "Ouvrir les réglages",
+    "scan.instruction": "Pointez vers un QR code de randonnée",
+    "scan.notFound":
+      "Cette randonnée n'est pas dans le catalogue. Essayez de rafraîchir l'onglet Explorer.",
+    "scan.alreadySaved": "Cette section est déjà sauvegardée.",
+    "scan.invalidQr":
+      "Ce QR code ne contient pas un lien de randonnée valide.",
+    "scan.downloadStarted": "Téléchargement lancé !",
+
+    // Sections
+    "saved.sectionLabel": "km {from} → km {to}",
   },
   en: {
     // Tabs
@@ -212,6 +237,31 @@ const translations: Record<Locale, Record<string, string>> = {
     "active.title": "Follow Route",
     "active.stop": "Stop",
     "route.followRoute": "Follow this route",
+
+    // Toast
+    "toast.catalogSynced": "Catalog updated",
+    "toast.catalogError": "Failed to load catalog",
+    "toast.downloadError": "Download failed",
+    "toast.sectionDownloadStarted": "Download started",
+    "toast.sectionInvalidQr": "Invalid QR code",
+    "toast.sectionNotFound": "Route not found in catalog",
+    "toast.sectionAlreadySaved": "Section already saved",
+
+    // QR scan
+    "scan.title": "Scan QR Code",
+    "scan.permission":
+      "Allow camera access to scan a hiking route QR code.",
+    "scan.openSettings": "Open Settings",
+    "scan.instruction": "Point at a hiking route QR code",
+    "scan.notFound":
+      "This route is not in the catalog. Try refreshing the Explore tab.",
+    "scan.alreadySaved": "This section is already saved.",
+    "scan.invalidQr":
+      "This QR code does not contain a valid route link.",
+    "scan.downloadStarted": "Download started!",
+
+    // Sections
+    "saved.sectionLabel": "km {from} → km {to}",
   },
 };
 
