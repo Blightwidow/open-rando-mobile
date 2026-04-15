@@ -89,6 +89,32 @@ export function TrailMap({
           shadowRadius: 4,
           elevation: 4,
         },
+        legend: {
+          position: "absolute",
+          top: 8,
+          left: 8,
+          backgroundColor: `${themeColors.surface}E6`,
+          borderRadius: borderRadius.small,
+          paddingHorizontal: spacing.small,
+          paddingVertical: spacing.extraSmall,
+          gap: 2,
+        },
+        legendItem: {
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 4,
+        },
+        legendDot: {
+          width: 10,
+          height: 10,
+          borderRadius: 5,
+          borderWidth: 1.5,
+          borderColor: "#ffffff",
+        },
+        legendLabel: {
+          fontSize: fontSize.small,
+          color: themeColors.text,
+        },
         poiPanel: {
           position: "absolute",
           bottom: 0,
@@ -311,6 +337,17 @@ export function TrailMap({
         <Pressable style={styles.recenterButton} onPress={handleRecenter}>
           <Ionicons name="locate" size={22} color={GPS_DOT_COLOR} />
         </Pressable>
+      )}
+
+      {poisGeoJson && (
+        <View style={styles.legend}>
+          {POI_COLOR_STOPS.map(([poiType, color]) => (
+            <View key={poiType} style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: color }]} />
+              <Text style={styles.legendLabel}>{t(`poi.${poiType}`)}</Text>
+            </View>
+          ))}
+        </View>
       )}
 
       {selectedPoi && (
