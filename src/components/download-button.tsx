@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import Toast from "react-native-toast-message";
+import * as Network from "expo-network";
 import type { Route } from "@/lib/types";
 import type { MapStyle } from "@/lib/constants";
 import { useDownload } from "@/hooks/use-download";
@@ -27,7 +28,7 @@ export function DownloadButton({ route }: DownloadButtonProps) {
     prevStatusRef.current = status;
   }, [status, error]);
 
-  const handlePress = () => {
+  const showStylePicker = () => {
     Alert.alert(t("download.chooseStyle"), undefined, [
       {
         text: t("download.stylePlan"),
@@ -39,6 +40,18 @@ export function DownloadButton({ route }: DownloadButtonProps) {
       },
       { text: t("settings.cancel"), style: "cancel" },
     ]);
+  };
+
+  const handlePress = async () => {
+    const networkState = await Network.getNetworkStateAsync();
+    if (networkState.type === Network.NetworkStateType.CELLULAR) {
+      Alert.alert(t("download.chooseStyle"), t("download.cellularWarning"), [
+        { text: t("settings.cancel"), style: "cancel" },
+        { text: t("download.cellularContinue"), onPress: showStylePicker },
+      ]);
+    } else {
+      showStylePicker();
+    }
   };
 
   if (status === "complete") {
@@ -63,7 +76,10 @@ export function DownloadButton({ route }: DownloadButtonProps) {
   if (status === "error") {
     return (
       <View style={styles.container}>
-        <Pressable style={[styles.button, styles.errorButton]} onPress={handlePress}>
+        <Pressable
+          style={[styles.button, styles.errorButton]}
+          onPress={() => void handlePress()}
+        >
           <Text style={[styles.buttonText, styles.errorText]}>{t("download.retry")}</Text>
         </Pressable>
         {error && <Text style={styles.errorMessage}>{error}</Text>}
@@ -73,7 +89,7 @@ export function DownloadButton({ route }: DownloadButtonProps) {
 
   return (
     <View style={styles.container}>
-      <Pressable style={styles.button} onPress={handlePress}>
+      <Pressable style={styles.button} onPress={() => void handlePress()}>
         <Text style={styles.buttonText}>{t("download.idle")}</Text>
       </Pressable>
     </View>

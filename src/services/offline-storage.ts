@@ -141,6 +141,11 @@ export async function downloadRouteData(
   logInfo("offline-storage", `Download complete for ${route.id}`);
 }
 
+export function getStorageUsedBytes(): number {
+  ensureRoutesDirectory();
+  return routesDirectory.size ?? 0;
+}
+
 export function deleteRouteData(routeId: string): void {
   logInfo("offline-storage", `Deleting route data for ${routeId}`);
   const directory = routeDirectory(routeId);

@@ -54,6 +54,10 @@ const translations: Record<Locale, Record<string, string>> = {
     "settings.title": "Réglages",
     "settings.storage": "Stockage",
     "settings.downloadedRoutes": "Randonnées téléchargées",
+    "settings.storageUsed": "Espace utilisé",
+    "download.cellularWarning":
+      "Vous êtes sur données mobiles. Ce téléchargement peut consommer plusieurs dizaines de Mo.",
+    "download.cellularContinue": "Continuer",
     "settings.deleteAll": "Supprimer tous les téléchargements",
     "settings.deleteConfirmTitle": "Supprimer tous les téléchargements",
     "settings.deleteConfirmMessage":
@@ -189,6 +193,10 @@ const translations: Record<Locale, Record<string, string>> = {
     "settings.title": "Settings",
     "settings.storage": "Storage",
     "settings.downloadedRoutes": "Downloaded routes",
+    "settings.storageUsed": "Storage used",
+    "download.cellularWarning":
+      "You are on mobile data. This download may use several tens of MB.",
+    "download.cellularContinue": "Continue",
     "settings.deleteAll": "Delete All Downloads",
     "settings.deleteConfirmTitle": "Delete All Downloads",
     "settings.deleteConfirmMessage":
