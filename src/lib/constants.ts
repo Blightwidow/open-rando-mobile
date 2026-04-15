@@ -13,5 +13,5 @@ export function tileStyleUrl(style: MapStyle): string {
   return style === "bright" ? TILE_STYLE_BRIGHT : TILE_STYLE_LIBERTY;
 }
 
-export const OFFLINE_TILE_MIN_ZOOM = 10;
+export const OFFLINE_TILE_MIN_ZOOM = 7;
 export const OFFLINE_TILE_MAX_ZOOM = 16;
