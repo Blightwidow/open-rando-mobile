@@ -1,16 +1,28 @@
 import * as SQLite from "expo-sqlite";
 import type { Route } from "@/lib/types";
+import { logInfo, logDebug } from "@/lib/logger";
 
 let database: SQLite.SQLiteDatabase | null = null;
+let initializationPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
 export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   if (database) return database;
-  database = await SQLite.openDatabaseAsync("openrando.db");
-  await initializeDatabase(database);
-  return database;
+  if (initializationPromise) return initializationPromise;
+
+  initializationPromise = (async () => {
+    logInfo("database", "Opening database openrando.db");
+    const db = await SQLite.openDatabaseAsync("openrando.db");
+    await initializeDatabase(db);
+    logInfo("database", "Database initialized successfully");
+    database = db;
+    return db;
+  })();
+
+  return initializationPromise;
 }
 
 async function initializeDatabase(database: SQLite.SQLiteDatabase): Promise<void> {
+  logDebug("database", "Creating schema tables");
   await database.execAsync(`
     DROP TABLE IF EXISTS hikes;
 
@@ -56,6 +68,7 @@ export async function setMetadataValue(key: string, value: string): Promise<void
 }
 
 export async function upsertRoutes(routes: Route[]): Promise<void> {
+  logInfo("database", `Upserting ${routes.length} routes`);
   const database = await getDatabase();
   await database.withTransactionAsync(async () => {
     for (const route of routes) {
