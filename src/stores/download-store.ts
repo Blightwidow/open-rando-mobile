@@ -1,7 +1,8 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import type { DownloadState, Route } from "@/lib/types";
+import type { DownloadState, Route, SectionEntry } from "@/lib/types";
+import { buildSectionId } from "@/lib/qr-utils";
 import {
   downloadRouteData,
   deleteRouteData,
@@ -10,10 +11,14 @@ import {
 
 interface DownloadStore {
   downloads: Record<string, DownloadState>;
+  sections: Record<string, SectionEntry>;
   startDownload: (route: Route) => Promise<void>;
   removeDownload: (routeId: string) => void;
   verifyDownload: (routeId: string) => boolean;
   getDownloadState: (routeId: string) => DownloadState;
+  startSectionDownload: (route: Route, fromKm: number, toKm: number) => Promise<void>;
+  removeSection: (sectionId: string) => void;
+  isSectionSaved: (routeId: string, fromKm: number, toKm: number) => boolean;
 }
 
 const defaultState: DownloadState = { status: "idle", progress: 0 };
@@ -22,6 +27,7 @@ export const useDownloadStore = create<DownloadStore>()(
   persist(
     (set, get) => ({
       downloads: {},
+      sections: {},
 
       getDownloadState: (routeId: string): DownloadState => {
         return get().downloads[routeId] ?? defaultState;
@@ -86,11 +92,70 @@ export const useDownloadStore = create<DownloadStore>()(
         }
         return exists;
       },
+
+      startSectionDownload: async (route: Route, fromKm: number, toKm: number) => {
+        const sectionId = buildSectionId(route.id, fromKm, toKm);
+
+        // Download route data if not already on disk
+        const downloadState = get().downloads[route.id];
+        if (downloadState?.status !== "complete") {
+          await get().startDownload(route);
+        }
+
+        // Add section entry
+        set((state) => ({
+          sections: {
+            ...state.sections,
+            [sectionId]: {
+              sectionId,
+              routeId: route.id,
+              slug: route.slug,
+              fromKm,
+              toKm,
+              savedAt: new Date().toISOString(),
+            },
+          },
+        }));
+      },
+
+      removeSection: (sectionId: string) => {
+        const section = get().sections[sectionId];
+        if (!section) return;
+
+        const { routeId } = section;
+
+        set((state) => {
+          const { [sectionId]: _, ...remainingSections } = state.sections;
+          return { sections: remainingSections };
+        });
+
+        // Clean up route data if no other sections or full downloads reference it
+        const hasOtherSections = Object.values(get().sections).some(
+          (entry) => entry.routeId === routeId,
+        );
+        const hasFullDownload = get().downloads[routeId]?.status === "complete";
+
+        if (!hasOtherSections && !hasFullDownload) {
+          deleteRouteData(routeId);
+          set((state) => {
+            const { [routeId]: _, ...remainingDownloads } = state.downloads;
+            return { downloads: remainingDownloads };
+          });
+        }
+      },
+
+      isSectionSaved: (routeId: string, fromKm: number, toKm: number): boolean => {
+        const sectionId = buildSectionId(routeId, fromKm, toKm);
+        return sectionId in get().sections;
+      },
     }),
     {
       name: "download-store",
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: (state) => ({ downloads: state.downloads }),
+      partialize: (state) => ({
+        downloads: state.downloads,
+        sections: state.sections,
+      }),
     },
   ),
 );

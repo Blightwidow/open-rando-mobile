@@ -16,6 +16,7 @@ export default function SavedLayout() {
     >
       <Stack.Screen name="index" options={{ title: t("saved.title") }} />
       <Stack.Screen name="[slug]" options={{ title: t("saved.offlineRoute") }} />
+      <Stack.Screen name="scan" options={{ title: t("scan.title") }} />
     </Stack>
   );
 }
