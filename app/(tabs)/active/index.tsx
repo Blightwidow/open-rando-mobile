@@ -95,6 +95,7 @@ export default function FollowRouteScreen() {
         userPosition={position}
         followUserLocation={true}
         mapStyle={downloadMapStyle}
+        showScaleBar={true}
         style={styles.fullScreenMap}
         onPoiPanelHeightChange={setPoiPanelHeight}
       />

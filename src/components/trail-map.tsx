@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Linking, Pressable, StyleSheet, Text, View, type ViewStyle } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MapLibreGL from "@maplibre/maplibre-react-native";
+import type { RegionPayload } from "@maplibre/maplibre-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { TILE_STYLE_URL, tileStyleUrl } from "@/lib/constants";
 import type { MapStyle } from "@/lib/constants";
 import { colors, fontSize, spacing, borderRadius } from "@/lib/theme";
@@ -39,6 +41,32 @@ const POI_COLOR_STOPS: [string, string][] = [
 
 const GPS_DOT_COLOR = "#007AFF";
 const GPS_ACCURACY_COLOR = "rgba(0,122,255,0.15)";
+const EARTH_CIRCUMFERENCE_M = 40075016.686;
+const SCALE_BAR_TARGET_WIDTH_PX = 80;
+const SCALE_STEPS_M = [
+  10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000,
+];
+
+interface ScaleInfo {
+  widthPx: number;
+  label: string;
+}
+
+function computeScale(zoomLevel: number, latitudeDeg: number): ScaleInfo {
+  const metersPerPixel =
+    (EARTH_CIRCUMFERENCE_M * Math.cos((latitudeDeg * Math.PI) / 180)) /
+    (256 * Math.pow(2, zoomLevel));
+
+  const targetMeters = metersPerPixel * SCALE_BAR_TARGET_WIDTH_PX;
+  const niceMeters =
+    SCALE_STEPS_M.find((step) => step >= targetMeters) ??
+    SCALE_STEPS_M[SCALE_STEPS_M.length - 1];
+
+  const widthPx = niceMeters / metersPerPixel;
+  const label = niceMeters >= 1000 ? `${niceMeters / 1000} km` : `${niceMeters} m`;
+
+  return { widthPx, label };
+}
 
 interface TrailMapProps {
   geoJson: unknown;
@@ -47,6 +75,7 @@ interface TrailMapProps {
   userPosition?: GpsPosition | null;
   followUserLocation?: boolean;
   mapStyle?: MapStyle;
+  showScaleBar?: boolean;
   style?: ViewStyle;
   onPoiPanelHeightChange?: (height: number) => void;
 }
@@ -58,12 +87,16 @@ export function TrailMap({
   userPosition,
   followUserLocation,
   mapStyle: mapStyleProp,
+  showScaleBar,
   style,
   onPoiPanelHeightChange,
 }: TrailMapProps) {
   const themeColors = useColors();
+  const insets = useSafeAreaInsets();
   const cameraRef = useRef<MapLibreGL.CameraRef>(null);
+  const hasCenteredRef = useRef(false);
   const [selectedPoi, setSelectedPoi] = useState<SelectedPoi | null>(null);
+  const [scaleInfo, setScaleInfo] = useState<ScaleInfo | null>(null);
 
   const styles = useMemo(
     () =>
@@ -94,7 +127,7 @@ export function TrailMap({
         },
         legend: {
           position: "absolute",
-          top: 8,
+          top: insets.top + 8,
           left: 8,
           backgroundColor: `${themeColors.surface}E6`,
           borderRadius: borderRadius.small,
@@ -117,6 +150,22 @@ export function TrailMap({
         legendLabel: {
           fontSize: fontSize.small,
           color: themeColors.text,
+        },
+        scaleBar: {
+          position: "absolute",
+          bottom: 28,
+          left: 8,
+        },
+        scaleBarLabel: {
+          fontSize: 10,
+          color: themeColors.text,
+          marginBottom: 2,
+        },
+        scaleBarLine: {
+          height: 4,
+          backgroundColor: themeColors.text,
+          borderWidth: 1,
+          borderColor: themeColors.text,
         },
         poiPanel: {
           position: "absolute",
@@ -162,8 +211,9 @@ export function TrailMap({
           color: themeColors.primary,
         },
       }),
-    [themeColors],
+    [themeColors, insets.top],
   );
+
   const bounds = useMemo(
     () => ({
       ne: [bbox[2], bbox[3]] as [number, number],
@@ -176,8 +226,15 @@ export function TrailMap({
     [bbox],
   );
 
+  // Center on user once when followUserLocation first becomes active
   useEffect(() => {
-    if (followUserLocation && userPosition && cameraRef.current) {
+    if (
+      followUserLocation &&
+      userPosition &&
+      cameraRef.current &&
+      !hasCenteredRef.current
+    ) {
+      hasCenteredRef.current = true;
       cameraRef.current.setCamera({
         centerCoordinate: [userPosition.longitude, userPosition.latitude],
         zoomLevel: 14,
@@ -185,6 +242,16 @@ export function TrailMap({
       });
     }
   }, [followUserLocation, userPosition]);
+
+  const handleRegionDidChange = useCallback(
+    (feature: GeoJSON.Feature<GeoJSON.Point, RegionPayload>) => {
+      if (!showScaleBar) return;
+      const zoom = feature.properties.zoomLevel;
+      const latitude = feature.geometry.coordinates[1];
+      setScaleInfo(computeScale(zoom, latitude));
+    },
+    [showScaleBar],
+  );
 
   const poisGeoJson = useMemo(() => {
     if (!pois || pois.length === 0) return null;
@@ -260,6 +327,7 @@ export function TrailMap({
         logoEnabled={false}
         attributionEnabled={true}
         attributionPosition={{ bottom: 8, right: 8 }}
+        onRegionDidChange={handleRegionDidChange}
         onPress={() => {
           setSelectedPoi(null);
           onPoiPanelHeightChange?.(0);
@@ -357,6 +425,13 @@ export function TrailMap({
               <Text style={styles.legendLabel}>{t(`poi.${poiType}`)}</Text>
             </View>
           ))}
+        </View>
+      )}
+
+      {showScaleBar && scaleInfo && (
+        <View style={styles.scaleBar}>
+          <Text style={styles.scaleBarLabel}>{scaleInfo.label}</Text>
+          <View style={[styles.scaleBarLine, { width: scaleInfo.widthPx }]} />
         </View>
       )}
 
