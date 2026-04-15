@@ -2,6 +2,13 @@ import { describe, expect, it, vi } from "vitest";
 import { isPositionReliable } from "@/services/location-service";
 import type { LocationObject } from "expo-location";
 
+vi.mock("@/lib/logger", () => ({
+  logDebug: vi.fn(),
+  logInfo: vi.fn(),
+  logWarn: vi.fn(),
+  logError: vi.fn(),
+}));
+
 vi.mock("expo-location", () => ({
   requestForegroundPermissionsAsync: vi.fn(),
   getForegroundPermissionsAsync: vi.fn(),
