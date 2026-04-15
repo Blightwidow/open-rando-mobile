@@ -223,7 +223,7 @@ export default function OfflineRouteDetailScreen() {
       {geoJson != null && (
         <View style={styles.mapSection}>
           <Text style={styles.sectionTitle}>{t("route.trailMap")}</Text>
-          <TrailMap geoJson={geoJson} bbox={route.bbox} />
+          <TrailMap geoJson={geoJson} bbox={route.bbox} pois={route.pois} />
         </View>
       )}
 

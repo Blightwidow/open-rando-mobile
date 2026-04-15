@@ -30,10 +30,10 @@ function buildPoiUrl(poi: PointOfInterest): { url: string; hasDirectUrl: boolean
 }
 
 const POI_COLOR_STOPS: [string, string][] = [
-  ["train_station", colors.primary],
-  ["bus_stop", colors.primaryLight],
-  ["camping", colors.success],
-  ["hotel", "#6c757d"],
+  ["train_station", "#22c55e"],
+  ["bus_stop", "#3b82f6"],
+  ["camping", "#f59e0b"],
+  ["hotel", "#a855f7"],
 ];
 
 const GPS_DOT_COLOR = "#007AFF";
