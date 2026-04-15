@@ -127,7 +127,7 @@ export function TrailMap({
         },
         legend: {
           position: "absolute",
-          top: insets.top + 8,
+          top: (followUserLocation ? insets.top : 0) + 8,
           left: 8,
           backgroundColor: `${themeColors.surface}E6`,
           borderRadius: borderRadius.small,
@@ -211,7 +211,7 @@ export function TrailMap({
           color: themeColors.primary,
         },
       }),
-    [themeColors, insets.top],
+    [themeColors, insets.top, followUserLocation],
   );
 
   const bounds = useMemo(
