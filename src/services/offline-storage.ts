@@ -35,8 +35,10 @@ export function isRouteDownloaded(routeId: string): boolean {
   return geoJsonFile(routeId).exists && elevationFile(routeId).exists;
 }
 
-function tilePackName(routeId: string): string {
-  return `tiles-${routeId}`;
+const ALL_MAP_STYLES: MapStyle[] = ["liberty", "bright"];
+
+function tilePackName(routeId: string, mapStyle: MapStyle): string {
+  return `tiles-${routeId}-${mapStyle}`;
 }
 
 async function downloadTilePack(
@@ -45,12 +47,12 @@ async function downloadTilePack(
   mapStyle: MapStyle,
   onProgress?: (progress: number) => void,
 ): Promise<void> {
-  const packName = tilePackName(routeId);
+  const packName = tilePackName(routeId, mapStyle);
   const styleURL = tileStyleUrl(mapStyle);
 
-  logInfo("offline-storage", `Downloading tile pack ${packName} (${mapStyle})`);
+  logInfo("offline-storage", `Downloading tile pack ${packName}`);
 
-  // Delete existing pack if present (style may have changed)
+  // Delete existing pack of this style if present
   try {
     await MapLibreGL.OfflineManager.deletePack(packName);
   } catch {
@@ -70,8 +72,7 @@ async function downloadTilePack(
         maxZoom: OFFLINE_TILE_MAX_ZOOM,
       },
       (_pack, status) => {
-        const percentage = status.percentage;
-        onProgress?.(percentage / 100);
+        onProgress?.(status.percentage / 100);
         if (status.percentage >= 100) {
           resolve();
         }
@@ -80,16 +81,18 @@ async function downloadTilePack(
         logError("offline-storage", `Tile pack error: ${error.message}`);
         reject(new Error(error.message));
       },
-    );
+    ).catch(reject); // propagate async errors (e.g. pack already exists)
   });
 }
 
 async function deleteTilePack(routeId: string): Promise<void> {
-  try {
-    await MapLibreGL.OfflineManager.deletePack(tilePackName(routeId));
-    logInfo("offline-storage", `Deleted tile pack for ${routeId}`);
-  } catch {
-    // Pack may not exist
+  for (const mapStyle of ALL_MAP_STYLES) {
+    try {
+      await MapLibreGL.OfflineManager.deletePack(tilePackName(routeId, mapStyle));
+      logInfo("offline-storage", `Deleted tile pack ${tilePackName(routeId, mapStyle)}`);
+    } catch {
+      // Pack may not exist
+    }
   }
 }
 
