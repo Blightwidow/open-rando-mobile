@@ -20,20 +20,20 @@ trainrando://route/{slug}?from={km}&to={km}
 
 ## Parameters
 
-| Parameter | Type   | Required | Description                              |
-|-----------|--------|----------|------------------------------------------|
+| Parameter | Type   | Required | Description                                       |
+| --------- | ------ | -------- | ------------------------------------------------- |
 | `slug`    | string | yes      | Route identifier (e.g. `gr-137`, `gr-10-etape-3`) |
-| `from`    | number | no       | Section start in kilometers along the route |
-| `to`      | number | no       | Section end in kilometers along the route   |
+| `from`    | number | no       | Section start in kilometers along the route       |
+| `to`      | number | no       | Section end in kilometers along the route         |
 
 When `from` and `to` are provided, the app downloads and displays only that section of the route. When omitted, the full route is used.
 
 ## Examples
 
 | Use case                | URL                                                              |
-|-------------------------|------------------------------------------------------------------|
+| ----------------------- | ---------------------------------------------------------------- |
 | Open full route         | `https://rando.dammaretz.fr/routes/gr-137`                       |
-| Open route section      | `https://rando.dammaretz.fr/routes/gr-10-etape-3?from=0&to=15.5`|
+| Open route section      | `https://rando.dammaretz.fr/routes/gr-10-etape-3?from=0&to=15.5` |
 | Custom scheme (full)    | `trainrando://route/gr-137`                                      |
 | Custom scheme (section) | `trainrando://route/gr-137?from=26.86&to=34.28`                  |
 
@@ -42,6 +42,7 @@ When `from` and `to` are provided, the app downloads and displays only that sect
 The app includes a built-in QR scanner. Any QR code containing a valid deeplink URL (web or custom scheme) or a bare route slug (e.g. `gr-137`) will be recognized.
 
 Accepted QR code content:
+
 - `https://rando.dammaretz.fr/routes/gr-137?from=5&to=12`
 - `trainrando://route/gr-137`
 - `gr-137` (bare slug, must match pattern `[a-z0-9][a-z0-9-]*[a-z0-9]`)
