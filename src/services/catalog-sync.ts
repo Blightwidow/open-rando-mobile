@@ -25,7 +25,10 @@ export async function syncCatalog(): Promise<SyncResult> {
       };
     }
 
-    logInfo("catalog-sync", `New catalog: ${catalog.routes.length} routes, generated_at=${catalog.generated_at}`);
+    logInfo(
+      "catalog-sync",
+      `New catalog: ${catalog.routes.length} routes, generated_at=${catalog.generated_at}`,
+    );
     await upsertRoutes(catalog.routes);
     await setMetadataValue("catalog_generated_at", catalog.generated_at);
 

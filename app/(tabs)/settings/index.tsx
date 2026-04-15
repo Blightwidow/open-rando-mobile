@@ -1,5 +1,12 @@
 import { useMemo, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { useDownloadStore } from "@/stores/download-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { spacing, fontSize, borderRadius } from "@/lib/theme";
