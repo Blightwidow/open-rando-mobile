@@ -16,11 +16,7 @@ interface DownloadStore {
   removeDownload: (routeId: string) => void;
   verifyDownload: (routeId: string) => boolean;
   getDownloadState: (routeId: string) => DownloadState;
-  startSectionDownload: (
-    route: Route,
-    fromKm: number,
-    toKm: number,
-  ) => Promise<void>;
+  startSectionDownload: (route: Route, fromKm: number, toKm: number) => Promise<void>;
   removeSection: (sectionId: string) => void;
   isSectionSaved: (routeId: string, fromKm: number, toKm: number) => boolean;
 }
@@ -97,11 +93,7 @@ export const useDownloadStore = create<DownloadStore>()(
         return exists;
       },
 
-      startSectionDownload: async (
-        route: Route,
-        fromKm: number,
-        toKm: number,
-      ) => {
+      startSectionDownload: async (route: Route, fromKm: number, toKm: number) => {
         const sectionId = buildSectionId(route.id, fromKm, toKm);
 
         // Download route data if not already on disk
@@ -152,11 +144,7 @@ export const useDownloadStore = create<DownloadStore>()(
         }
       },
 
-      isSectionSaved: (
-        routeId: string,
-        fromKm: number,
-        toKm: number,
-      ): boolean => {
+      isSectionSaved: (routeId: string, fromKm: number, toKm: number): boolean => {
         const sectionId = buildSectionId(routeId, fromKm, toKm);
         return sectionId in get().sections;
       },

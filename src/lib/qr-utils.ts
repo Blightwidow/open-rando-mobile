@@ -51,10 +51,6 @@ export function extractSlugAndSection(data: string): ParsedSection | null {
   }
 }
 
-export function buildSectionId(
-  routeId: string,
-  fromKm: number,
-  toKm: number,
-): string {
+export function buildSectionId(routeId: string, fromKm: number, toKm: number): string {
   return `${routeId}:${fromKm.toFixed(2)}:${toKm.toFixed(2)}`;
 }

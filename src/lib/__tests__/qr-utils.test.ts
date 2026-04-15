@@ -3,9 +3,7 @@ import { extractSlugAndSection, buildSectionId } from "@/lib/qr-utils";
 
 describe("extractSlugAndSection", () => {
   it("parses deep link with section bounds", () => {
-    const result = extractSlugAndSection(
-      "trainrando://route/gr-137?from=26.86&to=34.28",
-    );
+    const result = extractSlugAndSection("trainrando://route/gr-137?from=26.86&to=34.28");
     expect(result).toEqual({ slug: "gr-137", fromKm: 26.86, toKm: 34.28 });
   });
 
@@ -42,9 +40,7 @@ describe("extractSlugAndSection", () => {
   });
 
   it("returns null for wrong host", () => {
-    expect(
-      extractSlugAndSection("https://example.com/routes/gr-137"),
-    ).toBeNull();
+    expect(extractSlugAndSection("https://example.com/routes/gr-137")).toBeNull();
   });
 
   it("returns null for URL without slug path segment", () => {
@@ -52,21 +48,15 @@ describe("extractSlugAndSection", () => {
   });
 
   it("returns null for non-numeric from param", () => {
-    expect(
-      extractSlugAndSection("trainrando://route/gr-137?from=abc&to=10"),
-    ).toBeNull();
+    expect(extractSlugAndSection("trainrando://route/gr-137?from=abc&to=10")).toBeNull();
   });
 
   it("returns null for non-numeric to param", () => {
-    expect(
-      extractSlugAndSection("trainrando://route/gr-137?from=5&to=xyz"),
-    ).toBeNull();
+    expect(extractSlugAndSection("trainrando://route/gr-137?from=5&to=xyz")).toBeNull();
   });
 
   it("handles partial params — only from", () => {
-    const result = extractSlugAndSection(
-      "trainrando://route/gr-137?from=10.5",
-    );
+    const result = extractSlugAndSection("trainrando://route/gr-137?from=10.5");
     expect(result).toEqual({ slug: "gr-137", fromKm: 10.5 });
   });
 
@@ -76,18 +66,14 @@ describe("extractSlugAndSection", () => {
   });
 
   it("trims whitespace", () => {
-    const result = extractSlugAndSection(
-      "  trainrando://route/gr-137?from=1&to=2  ",
-    );
+    const result = extractSlugAndSection("  trainrando://route/gr-137?from=1&to=2  ");
     expect(result).toEqual({ slug: "gr-137", fromKm: 1, toKm: 2 });
   });
 });
 
 describe("buildSectionId", () => {
   it("builds section ID with fixed precision", () => {
-    expect(buildSectionId("abc-123", 26.86, 34.28)).toBe(
-      "abc-123:26.86:34.28",
-    );
+    expect(buildSectionId("abc-123", 26.86, 34.28)).toBe("abc-123:26.86:34.28");
   });
 
   it("pads short decimals", () => {
@@ -95,8 +81,6 @@ describe("buildSectionId", () => {
   });
 
   it("truncates long decimals", () => {
-    expect(buildSectionId("route-1", 1.999, 2.001)).toBe(
-      "route-1:2.00:2.00",
-    );
+    expect(buildSectionId("route-1", 1.999, 2.001)).toBe("route-1:2.00:2.00");
   });
 });

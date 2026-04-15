@@ -127,8 +127,7 @@ const translations: Record<Locale, Record<string, string>> = {
     "scan.notFound":
       "Cette randonnée n'est pas dans le catalogue. Essayez de rafraîchir l'onglet Explorer.",
     "scan.alreadySaved": "Cette section est déjà sauvegardée.",
-    "scan.invalidQr":
-      "Ce QR code ne contient pas un lien de randonnée valide.",
+    "scan.invalidQr": "Ce QR code ne contient pas un lien de randonnée valide.",
     "scan.downloadStarted": "Téléchargement lancé !",
 
     // Sections
@@ -249,15 +248,12 @@ const translations: Record<Locale, Record<string, string>> = {
 
     // QR scan
     "scan.title": "Scan QR Code",
-    "scan.permission":
-      "Allow camera access to scan a hiking route QR code.",
+    "scan.permission": "Allow camera access to scan a hiking route QR code.",
     "scan.openSettings": "Open Settings",
     "scan.instruction": "Point at a hiking route QR code",
-    "scan.notFound":
-      "This route is not in the catalog. Try refreshing the Explore tab.",
+    "scan.notFound": "This route is not in the catalog. Try refreshing the Explore tab.",
     "scan.alreadySaved": "This section is already saved.",
-    "scan.invalidQr":
-      "This QR code does not contain a valid route link.",
+    "scan.invalidQr": "This QR code does not contain a valid route link.",
     "scan.downloadStarted": "Download started!",
 
     // Sections

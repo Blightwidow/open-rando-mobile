@@ -1,11 +1,5 @@
 import { useRef, useMemo, useCallback } from "react";
-import {
-  Linking,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import Toast from "react-native-toast-message";
 import { useRouter } from "expo-router";
@@ -23,9 +17,7 @@ export default function ScanScreen() {
   const router = useRouter();
   const scannedRef = useRef(false);
   const [permission, requestPermission] = useCameraPermissions();
-  const startSectionDownload = useDownloadStore(
-    (state) => state.startSectionDownload,
-  );
+  const startSectionDownload = useDownloadStore((state) => state.startSectionDownload);
   const isSectionSaved = useDownloadStore((state) => state.isSectionSaved);
 
   const styles = useMemo(
@@ -105,7 +97,9 @@ export default function ScanScreen() {
           type: "error",
           text1: t("toast.sectionInvalidQr"),
           visibilityTime: 3000,
-          onHide: () => { scannedRef.current = false; },
+          onHide: () => {
+            scannedRef.current = false;
+          },
         });
         return;
       }
@@ -116,7 +110,9 @@ export default function ScanScreen() {
           type: "error",
           text1: t("toast.sectionNotFound"),
           visibilityTime: 3000,
-          onHide: () => { scannedRef.current = false; },
+          onHide: () => {
+            scannedRef.current = false;
+          },
         });
         return;
       }
@@ -130,7 +126,9 @@ export default function ScanScreen() {
           type: "info",
           text1: t("toast.sectionAlreadySaved"),
           visibilityTime: 3000,
-          onHide: () => { scannedRef.current = false; },
+          onHide: () => {
+            scannedRef.current = false;
+          },
         });
         return;
       }
@@ -151,7 +149,9 @@ export default function ScanScreen() {
           type: "error",
           text1: t("toast.downloadError"),
           visibilityTime: 3000,
-          onHide: () => { scannedRef.current = false; },
+          onHide: () => {
+            scannedRef.current = false;
+          },
         });
       }
     },
@@ -168,18 +168,11 @@ export default function ScanScreen() {
         <Text style={styles.permissionText}>{t("scan.permission")}</Text>
         {permission.canAskAgain ? (
           <Pressable style={styles.settingsButton} onPress={requestPermission}>
-            <Text style={styles.settingsButtonText}>
-              {t("scan.openSettings")}
-            </Text>
+            <Text style={styles.settingsButtonText}>{t("scan.openSettings")}</Text>
           </Pressable>
         ) : (
-          <Pressable
-            style={styles.settingsButton}
-            onPress={() => Linking.openSettings()}
-          >
-            <Text style={styles.settingsButtonText}>
-              {t("scan.openSettings")}
-            </Text>
+          <Pressable style={styles.settingsButton} onPress={() => Linking.openSettings()}>
+            <Text style={styles.settingsButtonText}>{t("scan.openSettings")}</Text>
           </Pressable>
         )}
       </View>
