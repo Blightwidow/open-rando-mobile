@@ -396,7 +396,12 @@ export function TrailMap({
             <MapLibreGL.CircleLayer
               id="pois-circles"
               style={{
-                circleRadius: 7,
+                circleRadius: [
+                  "case",
+                  ["==", ["get", "name"], selectedPoi?.name ?? ""],
+                  12,
+                  7,
+                ] as unknown as number,
                 circleColor: [
                   "match",
                   ["get", "poiType"],
@@ -404,7 +409,12 @@ export function TrailMap({
                   colors.primary,
                 ] as unknown as string,
                 circleStrokeColor: "#ffffff",
-                circleStrokeWidth: 2,
+                circleStrokeWidth: [
+                  "case",
+                  ["==", ["get", "name"], selectedPoi?.name ?? ""],
+                  3,
+                  2,
+                ] as unknown as number,
               }}
             />
           </MapLibreGL.ShapeSource>
