@@ -1,7 +1,10 @@
 import { Paths, File, Directory } from "expo-file-system";
+import MapLibreGL from "@maplibre/maplibre-react-native";
 import type { ElevationProfile, Route } from "@/lib/types";
+import type { MapStyle } from "@/lib/constants";
+import { tileStyleUrl, OFFLINE_TILE_MIN_ZOOM, OFFLINE_TILE_MAX_ZOOM } from "@/lib/constants";
 import { fetchElevation, fetchGeoJson } from "./api";
-import { logInfo, logDebug } from "@/lib/logger";
+import { logInfo, logDebug, logError } from "@/lib/logger";
 
 const routesDirectory = new Directory(Paths.document, "hikes");
 
@@ -28,24 +31,84 @@ export function isRouteDownloaded(routeId: string): boolean {
   return geoJsonFile(routeId).exists && elevationFile(routeId).exists;
 }
 
-export async function downloadRouteData(
-  route: Route,
+function tilePackName(routeId: string): string {
+  return `tiles-${routeId}`;
+}
+
+async function downloadTilePack(
+  routeId: string,
+  bbox: [number, number, number, number],
+  mapStyle: MapStyle,
   onProgress?: (progress: number) => void,
 ): Promise<void> {
-  logInfo("offline-storage", `Downloading route data for ${route.id}`);
+  const packName = tilePackName(routeId);
+  const styleURL = tileStyleUrl(mapStyle);
+
+  logInfo("offline-storage", `Downloading tile pack ${packName} (${mapStyle})`);
+
+  // Delete existing pack if present (style may have changed)
+  try {
+    await MapLibreGL.OfflineManager.deletePack(packName);
+  } catch {
+    // Pack may not exist, ignore
+  }
+
+  return new Promise<void>((resolve, reject) => {
+    MapLibreGL.OfflineManager.createPack(
+      {
+        name: packName,
+        styleURL,
+        bounds: [
+          [bbox[2], bbox[3]], // ne [lon, lat]
+          [bbox[0], bbox[1]], // sw [lon, lat]
+        ],
+        minZoom: OFFLINE_TILE_MIN_ZOOM,
+        maxZoom: OFFLINE_TILE_MAX_ZOOM,
+      },
+      (_pack, status) => {
+        const percentage = status.percentage;
+        onProgress?.(percentage / 100);
+        if (status.percentage >= 100) {
+          resolve();
+        }
+      },
+      (_pack, error) => {
+        logError("offline-storage", `Tile pack error: ${error.message}`);
+        reject(new Error(error.message));
+      },
+    );
+  });
+}
+
+async function deleteTilePack(routeId: string): Promise<void> {
+  try {
+    await MapLibreGL.OfflineManager.deletePack(tilePackName(routeId));
+    logInfo("offline-storage", `Deleted tile pack for ${routeId}`);
+  } catch {
+    // Pack may not exist
+  }
+}
+
+export async function downloadRouteData(
+  route: Route,
+  mapStyle: MapStyle,
+  onProgress?: (progress: number) => void,
+): Promise<void> {
+  logInfo("offline-storage", `Downloading route data for ${route.id} (style: ${mapStyle})`);
   const directory = routeDirectory(route.id);
   if (!directory.exists) {
     directory.create();
   }
 
-  onProgress?.(0.1);
+  onProgress?.(0.05);
 
+  // Phase 1: GeoJSON + elevation (0% → 30%)
   const [geoJson, elevation] = await Promise.all([
     fetchGeoJson(route.id),
     fetchElevation(route.id),
   ]);
 
-  onProgress?.(0.6);
+  onProgress?.(0.2);
 
   const geoJsonTarget = geoJsonFile(route.id);
   const elevationTarget = elevationFile(route.id);
@@ -60,6 +123,13 @@ export async function downloadRouteData(
   }
   elevationTarget.write(JSON.stringify(elevation));
 
+  onProgress?.(0.3);
+
+  // Phase 2: Tile pack (30% → 100%)
+  await downloadTilePack(route.id, route.bbox, mapStyle, (tileProgress) => {
+    onProgress?.(0.3 + tileProgress * 0.7);
+  });
+
   onProgress?.(1.0);
   logInfo("offline-storage", `Download complete for ${route.id}`);
 }
@@ -70,6 +140,8 @@ export function deleteRouteData(routeId: string): void {
   if (directory.exists) {
     directory.delete();
   }
+  // Fire-and-forget tile pack deletion
+  deleteTilePack(routeId).catch(() => {});
 }
 
 export async function readGeoJson(routeId: string): Promise<unknown> {

@@ -1,7 +1,8 @@
 import { useEffect, useRef } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import Toast from "react-native-toast-message";
 import type { Route } from "@/lib/types";
+import type { MapStyle } from "@/lib/constants";
 import { useDownload } from "@/hooks/use-download";
 import { colors, spacing, fontSize, borderRadius } from "@/lib/theme";
 import { t } from "@/lib/i18n";
@@ -26,6 +27,20 @@ export function DownloadButton({ route }: DownloadButtonProps) {
     prevStatusRef.current = status;
   }, [status, error]);
 
+  const handlePress = () => {
+    Alert.alert(t("download.chooseStyle"), undefined, [
+      {
+        text: t("download.stylePlan"),
+        onPress: () => download("bright" as MapStyle),
+      },
+      {
+        text: t("download.styleTopo"),
+        onPress: () => download("liberty" as MapStyle),
+      },
+      { text: t("settings.cancel"), style: "cancel" },
+    ]);
+  };
+
   if (status === "complete") {
     return null;
   }
@@ -48,7 +63,7 @@ export function DownloadButton({ route }: DownloadButtonProps) {
   if (status === "error") {
     return (
       <View style={styles.container}>
-        <Pressable style={[styles.button, styles.errorButton]} onPress={download}>
+        <Pressable style={[styles.button, styles.errorButton]} onPress={handlePress}>
           <Text style={[styles.buttonText, styles.errorText]}>{t("download.retry")}</Text>
         </Pressable>
         {error && <Text style={styles.errorMessage}>{error}</Text>}
@@ -58,7 +73,7 @@ export function DownloadButton({ route }: DownloadButtonProps) {
 
   return (
     <View style={styles.container}>
-      <Pressable style={styles.button} onPress={download}>
+      <Pressable style={styles.button} onPress={handlePress}>
         <Text style={styles.buttonText}>{t("download.idle")}</Text>
       </Pressable>
     </View>

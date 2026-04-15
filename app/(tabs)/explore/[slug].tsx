@@ -39,6 +39,9 @@ export default function RouteDetailScreen() {
     routeId ? state.getDownloadState(routeId) : IDLE_DOWNLOAD_STATE,
   );
   const removeDownload = useDownloadStore((state) => state.removeDownload);
+  const downloadMapStyle = useDownloadStore((state) =>
+    routeId ? state.getDownloadState(routeId).mapStyle : undefined,
+  );
   const offlineData = useOfflineRoute(slug);
   const { request: requestLocationPermission } = useLocationPermission();
   const startFollowing = useGpsStore((state) => state.startFollowing);
@@ -277,7 +280,7 @@ export default function RouteDetailScreen() {
       {showMap && (
         <View style={styles.mapSection}>
           <Text style={styles.sectionTitle}>{t("route.trailMap")}</Text>
-          <TrailMap geoJson={offlineData.geoJson} bbox={route.bbox} pois={route.pois} />
+          <TrailMap geoJson={offlineData.geoJson} bbox={route.bbox} pois={route.pois} mapStyle={downloadMapStyle} />
         </View>
       )}
 

@@ -1,3 +1,5 @@
+import type { MapStyle } from "@/lib/constants";
+
 export type PoiType = "train_station" | "bus_stop" | "camping" | "hotel";
 
 export interface PointOfInterest {
@@ -56,6 +58,7 @@ export interface DownloadState {
   status: DownloadStatus;
   progress: number;
   error?: string;
+  mapStyle?: MapStyle;
 }
 
 export interface SectionEntry {

@@ -1,13 +1,5 @@
 import { useMemo } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useOfflineRoute } from "@/hooks/use-offline-route";
@@ -30,6 +22,9 @@ export default function OfflineRouteDetailScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const { route, geoJson, elevation, isLoading, error } = useOfflineRoute(slug);
   const removeDownload = useDownloadStore((state) => state.removeDownload);
+  const downloadMapStyle = useDownloadStore(
+    (state) => route?.id ? state.getDownloadState(route.id).mapStyle : undefined,
+  );
   const { request: requestLocationPermission } = useLocationPermission();
   const startFollowing = useGpsStore((state) => state.startFollowing);
   const isTracking = useGpsStore((state) => state.isTracking);
@@ -153,6 +148,25 @@ export default function OfflineRouteDetailScreen() {
     );
   }
 
+  const handleDelete = () => {
+    if (!route) return;
+    Alert.alert(
+      t("saved.removeTitle"),
+      t("saved.removeMessage", { name: route.path_name }),
+      [
+        { text: t("settings.cancel"), style: "cancel" },
+        {
+          text: t("download.remove"),
+          style: "destructive",
+          onPress: () => {
+            removeDownload(route.id);
+            router.back();
+          },
+        },
+      ],
+    );
+  };
+
   if (isLoading) {
     return (
       <View style={styles.centered}>
@@ -176,11 +190,7 @@ export default function OfflineRouteDetailScreen() {
           <Text style={styles.pathBadgeText}>{route.path_ref}</Text>
         </View>
         <DifficultyBadge difficulty={route.difficulty} />
-        <Pressable
-          style={styles.downloadedLabel}
-          onPress={() => removeDownload(route.id)}
-          hitSlop={8}
-        >
+        <Pressable style={styles.downloadedLabel} onPress={handleDelete} hitSlop={8}>
           <Text style={styles.downloadedLabelText}>{t("download.complete")}</Text>
           <Ionicons name="trash-outline" size={14} color={colors.error} />
         </Pressable>
@@ -223,7 +233,7 @@ export default function OfflineRouteDetailScreen() {
       {geoJson != null && (
         <View style={styles.mapSection}>
           <Text style={styles.sectionTitle}>{t("route.trailMap")}</Text>
-          <TrailMap geoJson={geoJson} bbox={route.bbox} pois={route.pois} />
+          <TrailMap geoJson={geoJson} bbox={route.bbox} pois={route.pois} mapStyle={downloadMapStyle} />
         </View>
       )}
 

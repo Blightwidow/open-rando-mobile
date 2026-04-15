@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 import { useGpsStore } from "@/stores/gps-store";
+import { useDownloadStore } from "@/stores/download-store";
 import { useActiveHike } from "@/hooks/use-active-hike";
 import { useOfflineRoute } from "@/hooks/use-offline-route";
 import { TrailMap } from "@/components/trail-map";
@@ -22,6 +23,10 @@ export default function FollowRouteScreen() {
   const activeRouteSlug = useGpsStore((state) => state.activeRouteSlug);
   const stopFollowing = useGpsStore((state) => state.stopFollowing);
 
+  const activeRouteId = useGpsStore((state) => state.activeRouteId);
+  const downloadMapStyle = useDownloadStore(
+    (state) => activeRouteId ? state.getDownloadState(activeRouteId).mapStyle : undefined,
+  );
   const { route, geoJson } = useOfflineRoute(activeRouteSlug ?? "");
   const [poiPanelHeight, setPoiPanelHeight] = useState(0);
 
@@ -89,6 +94,7 @@ export default function FollowRouteScreen() {
         pois={route.pois}
         userPosition={position}
         followUserLocation={true}
+        mapStyle={downloadMapStyle}
         style={styles.fullScreenMap}
         onPoiPanelHeightChange={setPoiPanelHeight}
       />

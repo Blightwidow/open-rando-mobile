@@ -36,6 +36,9 @@ const translations: Record<Locale, Record<string, string>> = {
     "download.complete": "✓ Téléchargé",
     "download.retry": "Réessayer le téléchargement",
     "download.remove": "Supprimer",
+    "download.chooseStyle": "Choisir le style de carte",
+    "download.stylePlan": "Plan (épuré)",
+    "download.styleTopo": "Topo (détaillé)",
 
     // Saved
     "saved.title": "Randonnées sauvegardées",
@@ -169,6 +172,9 @@ const translations: Record<Locale, Record<string, string>> = {
     "download.complete": "✓ Downloaded",
     "download.retry": "Retry Download",
     "download.remove": "Remove",
+    "download.chooseStyle": "Choose map style",
+    "download.stylePlan": "Plan (clean)",
+    "download.styleTopo": "Topo (detailed)",
 
     // Saved
     "saved.title": "Saved Routes",

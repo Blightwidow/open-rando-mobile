@@ -1,8 +1,9 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Linking, Pressable, StyleSheet, Text, View, type ViewStyle } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MapLibreGL from "@maplibre/maplibre-react-native";
-import { TILE_STYLE_URL } from "@/lib/constants";
+import { TILE_STYLE_URL, tileStyleUrl } from "@/lib/constants";
+import type { MapStyle } from "@/lib/constants";
 import { colors, fontSize, spacing, borderRadius } from "@/lib/theme";
 import { useColors } from "@/hooks/use-colors";
 import { t } from "@/lib/i18n";
@@ -45,6 +46,7 @@ interface TrailMapProps {
   pois?: PointOfInterest[];
   userPosition?: GpsPosition | null;
   followUserLocation?: boolean;
+  mapStyle?: MapStyle;
   style?: ViewStyle;
   onPoiPanelHeightChange?: (height: number) => void;
 }
@@ -55,6 +57,7 @@ export function TrailMap({
   pois,
   userPosition,
   followUserLocation,
+  mapStyle: mapStyleProp,
   style,
   onPoiPanelHeightChange,
 }: TrailMapProps) {
@@ -161,14 +164,27 @@ export function TrailMap({
       }),
     [themeColors],
   );
-  const bounds = {
-    ne: [bbox[2], bbox[3]] as [number, number],
-    sw: [bbox[0], bbox[1]] as [number, number],
-    paddingTop: 40,
-    paddingBottom: 40,
-    paddingLeft: 40,
-    paddingRight: 40,
-  };
+  const bounds = useMemo(
+    () => ({
+      ne: [bbox[2], bbox[3]] as [number, number],
+      sw: [bbox[0], bbox[1]] as [number, number],
+      paddingTop: 40,
+      paddingBottom: 40,
+      paddingLeft: 40,
+      paddingRight: 40,
+    }),
+    [bbox],
+  );
+
+  useEffect(() => {
+    if (followUserLocation && userPosition && cameraRef.current) {
+      cameraRef.current.setCamera({
+        centerCoordinate: [userPosition.longitude, userPosition.latitude],
+        zoomLevel: 14,
+        animationDuration: 500,
+      });
+    }
+  }, [followUserLocation, userPosition]);
 
   const poisGeoJson = useMemo(() => {
     if (!pois || pois.length === 0) return null;
@@ -240,7 +256,7 @@ export function TrailMap({
     <View style={[styles.container, style]}>
       <MapLibreGL.MapView
         style={styles.map}
-        mapStyle={TILE_STYLE_URL}
+        mapStyle={mapStyleProp ? tileStyleUrl(mapStyleProp) : TILE_STYLE_URL}
         logoEnabled={false}
         attributionEnabled={true}
         attributionPosition={{ bottom: 8, right: 8 }}
@@ -251,13 +267,7 @@ export function TrailMap({
       >
         <MapLibreGL.Camera
           ref={cameraRef}
-          bounds={followUserLocation && userPosition ? undefined : bounds}
-          centerCoordinate={
-            followUserLocation && userPosition
-              ? [userPosition.longitude, userPosition.latitude]
-              : undefined
-          }
-          zoomLevel={followUserLocation && userPosition ? 14 : undefined}
+          defaultSettings={{ bounds }}
           animationDuration={0}
         />
 
