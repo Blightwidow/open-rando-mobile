@@ -37,7 +37,7 @@ export function isRouteDownloaded(routeId: string): boolean {
 
 const ALL_MAP_STYLES: MapStyle[] = ["liberty", "bright"];
 
-function tilePackName(routeId: string, mapStyle: MapStyle): string {
+export function tilePackName(routeId: string, mapStyle: MapStyle): string {
   return `tiles-${routeId}-${mapStyle}`;
 }
 
@@ -46,6 +46,7 @@ async function downloadTilePack(
   bbox: [number, number, number, number],
   mapStyle: MapStyle,
   onProgress?: (progress: number) => void,
+  signal?: AbortSignal,
 ): Promise<void> {
   const packName = tilePackName(routeId, mapStyle);
   const styleURL = tileStyleUrl(mapStyle);
@@ -60,6 +61,11 @@ async function downloadTilePack(
   }
 
   return new Promise<void>((resolve, reject) => {
+    // Cancellation: deleting an in-progress pack triggers the error callback
+    signal?.addEventListener("abort", () => {
+      MapLibreGL.OfflineManager.deletePack(packName).catch(() => {});
+    });
+
     MapLibreGL.OfflineManager.createPack(
       {
         name: packName,
@@ -72,12 +78,18 @@ async function downloadTilePack(
         maxZoom: OFFLINE_TILE_MAX_ZOOM,
       },
       (_pack, status) => {
+        if (signal?.aborted) return;
         onProgress?.(status.percentage / 100);
         if (status.percentage >= 100) {
           resolve();
         }
       },
       (_pack, error) => {
+        if (signal?.aborted) {
+          // Triggered by our deletePack cancel — resolve as aborted
+          reject(new DOMException("Download cancelled", "AbortError"));
+          return;
+        }
         logError("offline-storage", `Tile pack error: ${error.message}`);
         reject(new Error(error.message));
       },
@@ -100,6 +112,7 @@ export async function downloadRouteData(
   route: Route,
   mapStyle: MapStyle,
   onProgress?: (progress: number) => void,
+  signal?: AbortSignal,
 ): Promise<void> {
   logInfo(
     "offline-storage",
@@ -114,8 +127,8 @@ export async function downloadRouteData(
 
   // Phase 1: GeoJSON + elevation (0% → 30%)
   const [geoJson, elevation] = await Promise.all([
-    fetchGeoJson(route.id),
-    fetchElevation(route.id),
+    fetchGeoJson(route.id, signal),
+    fetchElevation(route.id, signal),
   ]);
 
   onProgress?.(0.2);
@@ -136,9 +149,15 @@ export async function downloadRouteData(
   onProgress?.(0.3);
 
   // Phase 2: Tile pack (30% → 100%)
-  await downloadTilePack(route.id, route.bbox, mapStyle, (tileProgress) => {
-    onProgress?.(0.3 + tileProgress * 0.7);
-  });
+  await downloadTilePack(
+    route.id,
+    route.bbox,
+    mapStyle,
+    (tileProgress) => {
+      onProgress?.(0.3 + tileProgress * 0.7);
+    },
+    signal,
+  );
 
   onProgress?.(1.0);
   logInfo("offline-storage", `Download complete for ${route.id}`);

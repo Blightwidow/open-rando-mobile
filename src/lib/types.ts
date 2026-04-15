@@ -59,6 +59,7 @@ export interface DownloadState {
   progress: number;
   error?: string;
   mapStyle?: MapStyle;
+  routeName?: string;
 }
 
 export interface SectionEntry {

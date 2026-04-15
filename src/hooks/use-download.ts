@@ -7,6 +7,7 @@ export function useDownload(route: Route) {
   const downloadState = useDownloadStore((state) => state.getDownloadState(route.id));
   const startDownload = useDownloadStore((state) => state.startDownload);
   const removeDownload = useDownloadStore((state) => state.removeDownload);
+  const cancelDownloadAction = useDownloadStore((state) => state.cancelDownload);
 
   const download = useCallback(
     (mapStyle: MapStyle) => {
@@ -19,6 +20,10 @@ export function useDownload(route: Route) {
     removeDownload(route.id);
   }, [route.id, removeDownload]);
 
+  const cancel = useCallback(() => {
+    cancelDownloadAction(route.id);
+  }, [route.id, cancelDownloadAction]);
+
   return {
     status: downloadState.status,
     progress: downloadState.progress,
@@ -27,5 +32,6 @@ export function useDownload(route: Route) {
     isDownloaded: downloadState.status === "complete",
     download,
     remove,
+    cancel,
   };
 }

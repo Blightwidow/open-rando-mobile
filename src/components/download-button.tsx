@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import Toast from "react-native-toast-message";
 import * as Network from "expo-network";
 import type { Route } from "@/lib/types";
@@ -13,7 +14,7 @@ interface DownloadButtonProps {
 }
 
 export function DownloadButton({ route }: DownloadButtonProps) {
-  const { status, progress, error, download } = useDownload(route);
+  const { status, progress, error, download, cancel } = useDownload(route);
   const prevStatusRef = useRef(status);
 
   useEffect(() => {
@@ -65,9 +66,14 @@ export function DownloadButton({ route }: DownloadButtonProps) {
           <View style={styles.progressBackground}>
             <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
           </View>
-          <Text style={styles.buttonText}>
-            {t("download.downloading", { progress: Math.round(progress * 100) })}
-          </Text>
+          <View style={styles.downloadingRow}>
+            <Text style={styles.buttonText}>
+              {t("download.downloading", { progress: Math.round(progress * 100) })}
+            </Text>
+            <Pressable onPress={cancel} hitSlop={8} style={styles.cancelButton}>
+              <Ionicons name="close-circle" size={20} color="#fff" />
+            </Pressable>
+          </View>
         </View>
       </View>
     );
@@ -129,6 +135,14 @@ const styles = StyleSheet.create({
   progressFill: {
     height: "100%",
     backgroundColor: colors.primary,
+  },
+  downloadingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.small,
+  },
+  cancelButton: {
+    marginLeft: "auto",
   },
   errorMessage: {
     color: colors.error,

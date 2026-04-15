@@ -12,9 +12,12 @@ export async function fetchCatalog(): Promise<CatalogResponse> {
   return response.json();
 }
 
-export async function fetchGeoJson(routeId: string): Promise<unknown> {
+export async function fetchGeoJson(
+  routeId: string,
+  signal?: AbortSignal,
+): Promise<unknown> {
   logInfo("api", `Fetching GeoJSON for ${routeId}`);
-  const response = await fetch(`${BASE_DATA_URL}/geojson/${routeId}.json`);
+  const response = await fetch(`${BASE_DATA_URL}/geojson/${routeId}.json`, { signal });
   if (!response.ok) {
     logError("api", `GeoJSON fetch failed for ${routeId}: ${response.status}`);
     throw new Error(`Failed to fetch GeoJSON for ${routeId}: ${response.status}`);
@@ -22,9 +25,12 @@ export async function fetchGeoJson(routeId: string): Promise<unknown> {
   return response.json();
 }
 
-export async function fetchElevation(routeId: string): Promise<ElevationProfile> {
+export async function fetchElevation(
+  routeId: string,
+  signal?: AbortSignal,
+): Promise<ElevationProfile> {
   logInfo("api", `Fetching elevation for ${routeId}`);
-  const response = await fetch(`${BASE_DATA_URL}/elevation/${routeId}.json`);
+  const response = await fetch(`${BASE_DATA_URL}/elevation/${routeId}.json`, { signal });
   if (!response.ok) {
     logError("api", `Elevation fetch failed for ${routeId}: ${response.status}`);
     throw new Error(`Failed to fetch elevation for ${routeId}: ${response.status}`);

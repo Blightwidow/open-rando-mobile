@@ -58,6 +58,8 @@ const translations: Record<Locale, Record<string, string>> = {
     "download.cellularWarning":
       "Vous êtes sur données mobiles. Ce téléchargement peut consommer plusieurs dizaines de Mo.",
     "download.cellularContinue": "Continuer",
+    "notification.downloading": "Téléchargement… {progress}%",
+    "notification.downloadComplete": "Téléchargement terminé ✓",
     "settings.deleteAll": "Supprimer tous les téléchargements",
     "settings.deleteConfirmTitle": "Supprimer tous les téléchargements",
     "settings.deleteConfirmMessage":
@@ -197,6 +199,8 @@ const translations: Record<Locale, Record<string, string>> = {
     "download.cellularWarning":
       "You are on mobile data. This download may use several tens of MB.",
     "download.cellularContinue": "Continue",
+    "notification.downloading": "Downloading... {progress}%",
+    "notification.downloadComplete": "Download complete ✓",
     "settings.deleteAll": "Delete All Downloads",
     "settings.deleteConfirmTitle": "Delete All Downloads",
     "settings.deleteConfirmMessage":

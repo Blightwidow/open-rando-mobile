@@ -9,11 +9,21 @@ import {
   deleteRouteData,
   isRouteDownloaded,
 } from "@/services/offline-storage";
+import {
+  requestNotificationPermission,
+  updateDownloadNotification,
+  showDownloadCompleteNotification,
+  dismissDownloadNotification,
+} from "@/lib/download-notifications";
+
+// Module-level map: not persisted, resets on app restart
+const activeCancellers = new Map<string, AbortController>();
 
 interface DownloadStore {
   downloads: Record<string, DownloadState>;
   sections: Record<string, SectionEntry>;
   startDownload: (route: Route, mapStyle: MapStyle) => Promise<void>;
+  cancelDownload: (routeId: string) => void;
   removeDownload: (routeId: string) => void;
   verifyDownload: (routeId: string) => boolean;
   getDownloadState: (routeId: string) => DownloadState;
@@ -40,30 +50,67 @@ export const useDownloadStore = create<DownloadStore>()(
       },
 
       startDownload: async (route: Route, mapStyle: MapStyle) => {
+        const controller = new AbortController();
+        activeCancellers.set(route.id, controller);
+
         set((state) => ({
           downloads: {
             ...state.downloads,
-            [route.id]: { status: "downloading", progress: 0, mapStyle },
+            [route.id]: {
+              status: "downloading",
+              progress: 0,
+              mapStyle,
+              routeName: route.path_name,
+            },
           },
         }));
 
+        void requestNotificationPermission();
+
         try {
-          await downloadRouteData(route, mapStyle, (progress) => {
-            set((state) => ({
-              downloads: {
-                ...state.downloads,
-                [route.id]: { status: "downloading", progress, mapStyle },
-              },
-            }));
-          });
+          await downloadRouteData(
+            route,
+            mapStyle,
+            (progress) => {
+              if (controller.signal.aborted) return;
+              set((state) => ({
+                downloads: {
+                  ...state.downloads,
+                  [route.id]: {
+                    status: "downloading",
+                    progress,
+                    mapStyle,
+                    routeName: route.path_name,
+                  },
+                },
+              }));
+              void updateDownloadNotification(route.id, route.path_name, progress);
+            },
+            controller.signal,
+          );
+
+          activeCancellers.delete(route.id);
+
+          if (controller.signal.aborted) return;
 
           set((state) => ({
             downloads: {
               ...state.downloads,
-              [route.id]: { status: "complete", progress: 1, mapStyle },
+              [route.id]: {
+                status: "complete",
+                progress: 1,
+                mapStyle,
+                routeName: route.path_name,
+              },
             },
           }));
+
+          void showDownloadCompleteNotification(route.id, route.path_name);
         } catch (error) {
+          activeCancellers.delete(route.id);
+
+          if (controller.signal.aborted) return;
+
           set((state) => ({
             downloads: {
               ...state.downloads,
@@ -71,11 +118,38 @@ export const useDownloadStore = create<DownloadStore>()(
                 status: "error",
                 progress: 0,
                 mapStyle,
+                routeName: route.path_name,
                 error: error instanceof Error ? error.message : "Download failed",
               },
             },
           }));
+
+          void dismissDownloadNotification(route.id);
         }
+      },
+
+      cancelDownload: (routeId: string) => {
+        const controller = activeCancellers.get(routeId);
+        if (controller) {
+          controller.abort();
+          activeCancellers.delete(routeId);
+        }
+        void dismissDownloadNotification(routeId);
+        set((state) => {
+          const current = state.downloads[routeId];
+          if (!current || current.status !== "downloading") return state;
+          return {
+            downloads: {
+              ...state.downloads,
+              [routeId]: {
+                status: "idle",
+                progress: 0,
+                mapStyle: current.mapStyle,
+                routeName: current.routeName,
+              },
+            },
+          };
+        });
       },
 
       removeDownload: (routeId: string) => {
