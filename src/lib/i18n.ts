@@ -132,6 +132,10 @@ const translations: Record<Locale, Record<string, string>> = {
 
     // Sections
     "saved.sectionLabel": "km {from} → km {to}",
+
+    // Developer
+    "settings.developer": "Développeur",
+    "settings.exportLog": "Exporter le journal de debug",
   },
   en: {
     // Tabs
@@ -258,6 +262,10 @@ const translations: Record<Locale, Record<string, string>> = {
 
     // Sections
     "saved.sectionLabel": "km {from} → km {to}",
+
+    // Developer
+    "settings.developer": "Developer",
+    "settings.exportLog": "Export Debug Log",
   },
 };
 

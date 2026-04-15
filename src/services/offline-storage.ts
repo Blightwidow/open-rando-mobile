@@ -1,6 +1,7 @@
 import { Paths, File, Directory } from "expo-file-system";
 import type { ElevationProfile, Route } from "@/lib/types";
 import { fetchElevation, fetchGeoJson } from "./api";
+import { logInfo, logDebug } from "@/lib/logger";
 
 const routesDirectory = new Directory(Paths.document, "hikes");
 
@@ -18,6 +19,7 @@ function elevationFile(routeId: string): File {
 
 export function ensureRoutesDirectory(): void {
   if (!routesDirectory.exists) {
+    logInfo("offline-storage", "Creating routes directory");
     routesDirectory.create();
   }
 }
@@ -30,6 +32,7 @@ export async function downloadRouteData(
   route: Route,
   onProgress?: (progress: number) => void,
 ): Promise<void> {
+  logInfo("offline-storage", `Downloading route data for ${route.id}`);
   const directory = routeDirectory(route.id);
   if (!directory.exists) {
     directory.create();
@@ -58,9 +61,11 @@ export async function downloadRouteData(
   elevationTarget.write(JSON.stringify(elevation));
 
   onProgress?.(1.0);
+  logInfo("offline-storage", `Download complete for ${route.id}`);
 }
 
 export function deleteRouteData(routeId: string): void {
+  logInfo("offline-storage", `Deleting route data for ${routeId}`);
   const directory = routeDirectory(routeId);
   if (directory.exists) {
     directory.delete();
@@ -91,5 +96,6 @@ export function getDownloadedRouteIds(): string[] {
     }
   }
 
+  logDebug("offline-storage", `Found ${downloadedIds.length} downloaded routes`);
   return downloadedIds;
 }

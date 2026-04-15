@@ -1,5 +1,12 @@
-import { useMemo } from "react";
-import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import { useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { useDownloadStore } from "@/stores/download-store";
 import { useSettingsStore } from "@/stores/settings-store";
 import { spacing, fontSize, borderRadius } from "@/lib/theme";
@@ -8,6 +15,7 @@ import { t } from "@/lib/i18n";
 import { useLocale } from "@/hooks/use-locale";
 import type { Locale } from "@/lib/i18n";
 import type { ThemePreference } from "@/stores/settings-store";
+import { shareLog } from "@/lib/logger";
 
 export default function SettingsScreen() {
   const locale = useLocale();
@@ -98,9 +106,26 @@ export default function SettingsScreen() {
         toggleButtonTextActive: {
           color: "#fff",
         },
+        exportButton: {
+          marginTop: spacing.small,
+          backgroundColor: colors.primary,
+          borderRadius: borderRadius.medium,
+          paddingVertical: spacing.small,
+          alignItems: "center",
+          flexDirection: "row",
+          justifyContent: "center",
+          gap: spacing.small,
+        },
+        exportText: {
+          color: "#fff",
+          fontSize: fontSize.body,
+          fontWeight: "600",
+        },
       }),
     [colors],
   );
+
+  const [isExportingLog, setIsExportingLog] = useState(false);
 
   const downloadedCount = Object.values(downloads).filter(
     (state) => state.status === "complete",
@@ -120,6 +145,17 @@ export default function SettingsScreen() {
         },
       },
     ]);
+  };
+
+  const handleExportLog = async () => {
+    setIsExportingLog(true);
+    try {
+      await shareLog();
+    } catch (error) {
+      Alert.alert("Error", `Failed to export log: ${error}`);
+    } finally {
+      setIsExportingLog(false);
+    }
   };
 
   const handleLocaleChange = (newLocale: Locale) => {
@@ -213,6 +249,21 @@ export default function SettingsScreen() {
         </View>
         <Text style={styles.description}>{t("settings.description")}</Text>
         <Text style={styles.link}>rando.dammaretz.fr</Text>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>{t("settings.developer")}</Text>
+        <Pressable
+          style={styles.exportButton}
+          onPress={handleExportLog}
+          disabled={isExportingLog}
+        >
+          {isExportingLog ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Text style={styles.exportText}>{t("settings.exportLog")}</Text>
+          )}
+        </Pressable>
       </View>
     </View>
   );

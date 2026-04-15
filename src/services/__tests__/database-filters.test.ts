@@ -5,6 +5,13 @@ vi.mock("expo-sqlite", () => ({
   openDatabaseAsync: vi.fn(),
 }));
 
+vi.mock("@/lib/logger", () => ({
+  logDebug: vi.fn(),
+  logInfo: vi.fn(),
+  logWarn: vi.fn(),
+  logError: vi.fn(),
+}));
+
 describe("buildFilterQuery", () => {
   it("returns no WHERE clause when no filters active", () => {
     const { sql, params } = buildFilterQuery({ regions: [] });
