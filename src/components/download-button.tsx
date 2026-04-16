@@ -1,7 +1,10 @@
 import { useEffect, useRef } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import Toast from "react-native-toast-message";
+import * as Network from "expo-network";
 import type { Route } from "@/lib/types";
+import type { MapStyle } from "@/lib/constants";
 import { useDownload } from "@/hooks/use-download";
 import { colors, spacing, fontSize, borderRadius } from "@/lib/theme";
 import { t } from "@/lib/i18n";
@@ -11,7 +14,7 @@ interface DownloadButtonProps {
 }
 
 export function DownloadButton({ route }: DownloadButtonProps) {
-  const { status, progress, error, download } = useDownload(route);
+  const { status, progress, error, download, cancel } = useDownload(route);
   const prevStatusRef = useRef(status);
 
   useEffect(() => {
@@ -26,6 +29,32 @@ export function DownloadButton({ route }: DownloadButtonProps) {
     prevStatusRef.current = status;
   }, [status, error]);
 
+  const showStylePicker = () => {
+    Alert.alert(t("download.chooseStyle"), undefined, [
+      {
+        text: t("download.stylePlan"),
+        onPress: () => download("bright" as MapStyle),
+      },
+      {
+        text: t("download.styleTopo"),
+        onPress: () => download("liberty" as MapStyle),
+      },
+      { text: t("settings.cancel"), style: "cancel" },
+    ]);
+  };
+
+  const handlePress = async () => {
+    const networkState = await Network.getNetworkStateAsync();
+    if (networkState.type === Network.NetworkStateType.CELLULAR) {
+      Alert.alert(t("download.chooseStyle"), t("download.cellularWarning"), [
+        { text: t("settings.cancel"), style: "cancel" },
+        { text: t("download.cellularContinue"), onPress: showStylePicker },
+      ]);
+    } else {
+      showStylePicker();
+    }
+  };
+
   if (status === "complete") {
     return null;
   }
@@ -37,9 +66,14 @@ export function DownloadButton({ route }: DownloadButtonProps) {
           <View style={styles.progressBackground}>
             <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
           </View>
-          <Text style={styles.buttonText}>
-            {t("download.downloading", { progress: Math.round(progress * 100) })}
-          </Text>
+          <View style={styles.downloadingRow}>
+            <Text style={styles.buttonText}>
+              {t("download.downloading", { progress: Math.round(progress * 100) })}
+            </Text>
+            <Pressable onPress={cancel} hitSlop={8} style={styles.cancelButton}>
+              <Ionicons name="close-circle" size={20} color="#fff" />
+            </Pressable>
+          </View>
         </View>
       </View>
     );
@@ -48,7 +82,10 @@ export function DownloadButton({ route }: DownloadButtonProps) {
   if (status === "error") {
     return (
       <View style={styles.container}>
-        <Pressable style={[styles.button, styles.errorButton]} onPress={download}>
+        <Pressable
+          style={[styles.button, styles.errorButton]}
+          onPress={() => void handlePress()}
+        >
           <Text style={[styles.buttonText, styles.errorText]}>{t("download.retry")}</Text>
         </Pressable>
         {error && <Text style={styles.errorMessage}>{error}</Text>}
@@ -58,7 +95,7 @@ export function DownloadButton({ route }: DownloadButtonProps) {
 
   return (
     <View style={styles.container}>
-      <Pressable style={styles.button} onPress={download}>
+      <Pressable style={styles.button} onPress={() => void handlePress()}>
         <Text style={styles.buttonText}>{t("download.idle")}</Text>
       </Pressable>
     </View>
@@ -98,6 +135,14 @@ const styles = StyleSheet.create({
   progressFill: {
     height: "100%",
     backgroundColor: colors.primary,
+  },
+  downloadingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.small,
+  },
+  cancelButton: {
+    marginLeft: "auto",
   },
   errorMessage: {
     color: colors.error,

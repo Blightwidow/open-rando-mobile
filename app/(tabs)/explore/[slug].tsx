@@ -38,7 +38,9 @@ export default function RouteDetailScreen() {
   const downloadState = useDownloadStore((state) =>
     routeId ? state.getDownloadState(routeId) : IDLE_DOWNLOAD_STATE,
   );
-  const removeDownload = useDownloadStore((state) => state.removeDownload);
+  const downloadMapStyle = useDownloadStore((state) =>
+    routeId ? state.getDownloadState(routeId).mapStyle : undefined,
+  );
   const offlineData = useOfflineRoute(slug);
   const { request: requestLocationPermission } = useLocationPermission();
   const startFollowing = useGpsStore((state) => state.startFollowing);
@@ -222,15 +224,11 @@ export default function RouteDetailScreen() {
           <Text style={styles.pathBadgeText}>{route.path_ref}</Text>
         </View>
         <DifficultyBadge difficulty={route.difficulty} />
-        {downloadState.status === "complete" && routeId && (
-          <Pressable
-            style={styles.downloadedLabel}
-            onPress={() => removeDownload(routeId)}
-            hitSlop={8}
-          >
+        {downloadState.status === "complete" && (
+          <View style={styles.downloadedLabel}>
             <Text style={styles.downloadedLabelText}>{t("download.complete")}</Text>
-            <Ionicons name="trash-outline" size={14} color={colors.error} />
-          </Pressable>
+            <Ionicons name="checkmark-circle" size={14} color={colors.primary} />
+          </View>
         )}
       </View>
 
@@ -277,7 +275,12 @@ export default function RouteDetailScreen() {
       {showMap && (
         <View style={styles.mapSection}>
           <Text style={styles.sectionTitle}>{t("route.trailMap")}</Text>
-          <TrailMap geoJson={offlineData.geoJson} bbox={route.bbox} pois={route.pois} />
+          <TrailMap
+            geoJson={offlineData.geoJson}
+            bbox={route.bbox}
+            pois={route.pois}
+            mapStyle={downloadMapStyle}
+          />
         </View>
       )}
 

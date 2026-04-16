@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useFilterStore } from "@/stores/filter-store";
 import { useDistinctRegions } from "@/hooks/use-catalog";
@@ -23,6 +24,7 @@ interface FilterSheetProps {
 
 export function FilterSheet({ visible, onClose }: FilterSheetProps) {
   const colors = useColors();
+  const insets = useSafeAreaInsets();
   const regions = useFilterStore((state) => state.regions);
   const terrains = useFilterStore((state) => state.terrains);
   const toggleRegion = useFilterStore((state) => state.toggleRegion);
@@ -43,7 +45,7 @@ export function FilterSheet({ visible, onClose }: FilterSheetProps) {
           justifyContent: "space-between",
           alignItems: "center",
           paddingHorizontal: spacing.medium,
-          paddingVertical: spacing.medium,
+          paddingBottom: spacing.medium,
           borderBottomWidth: 1,
           borderBottomColor: colors.border,
         },
@@ -138,7 +140,7 @@ export function FilterSheet({ visible, onClose }: FilterSheetProps) {
       onRequestClose={onClose}
     >
       <View style={styles.container}>
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + spacing.medium }]}>
           <Text style={styles.title}>{t("filters.title")}</Text>
           <View style={styles.headerActions}>
             {hasActiveFilters && (

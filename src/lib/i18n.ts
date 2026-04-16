@@ -36,6 +36,9 @@ const translations: Record<Locale, Record<string, string>> = {
     "download.complete": "✓ Téléchargé",
     "download.retry": "Réessayer le téléchargement",
     "download.remove": "Supprimer",
+    "download.chooseStyle": "Choisir le style de carte",
+    "download.stylePlan": "Plan (épuré)",
+    "download.styleTopo": "Topo (détaillé)",
 
     // Saved
     "saved.title": "Randonnées sauvegardées",
@@ -51,6 +54,12 @@ const translations: Record<Locale, Record<string, string>> = {
     "settings.title": "Réglages",
     "settings.storage": "Stockage",
     "settings.downloadedRoutes": "Randonnées téléchargées",
+    "settings.storageUsed": "Espace utilisé",
+    "download.cellularWarning":
+      "Vous êtes sur données mobiles. Ce téléchargement peut consommer plusieurs dizaines de Mo.",
+    "download.cellularContinue": "Continuer",
+    "notification.downloading": "Téléchargement… {progress}%",
+    "notification.downloadComplete": "Téléchargement terminé ✓",
     "settings.deleteAll": "Supprimer tous les téléchargements",
     "settings.deleteConfirmTitle": "Supprimer tous les téléchargements",
     "settings.deleteConfirmMessage":
@@ -169,6 +178,9 @@ const translations: Record<Locale, Record<string, string>> = {
     "download.complete": "✓ Downloaded",
     "download.retry": "Retry Download",
     "download.remove": "Remove",
+    "download.chooseStyle": "Choose map style",
+    "download.stylePlan": "Plan (clean)",
+    "download.styleTopo": "Topo (detailed)",
 
     // Saved
     "saved.title": "Saved Routes",
@@ -183,6 +195,12 @@ const translations: Record<Locale, Record<string, string>> = {
     "settings.title": "Settings",
     "settings.storage": "Storage",
     "settings.downloadedRoutes": "Downloaded routes",
+    "settings.storageUsed": "Storage used",
+    "download.cellularWarning":
+      "You are on mobile data. This download may use several tens of MB.",
+    "download.cellularContinue": "Continue",
+    "notification.downloading": "Downloading... {progress}%",
+    "notification.downloadComplete": "Download complete ✓",
     "settings.deleteAll": "Delete All Downloads",
     "settings.deleteConfirmTitle": "Delete All Downloads",
     "settings.deleteConfirmMessage":

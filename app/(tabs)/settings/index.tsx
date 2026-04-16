@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { useDownloadStore } from "@/stores/download-store";
 import { useSettingsStore } from "@/stores/settings-store";
+import { getStorageUsedBytes } from "@/services/offline-storage";
 import { spacing, fontSize, borderRadius } from "@/lib/theme";
 import { useColors } from "@/hooks/use-colors";
 import { t } from "@/lib/i18n";
@@ -126,10 +127,21 @@ export default function SettingsScreen() {
   );
 
   const [isExportingLog, setIsExportingLog] = useState(false);
+  const [storageUsedBytes, setStorageUsedBytes] = useState(0);
+
+  useEffect(() => {
+    setStorageUsedBytes(getStorageUsedBytes());
+  }, [downloads]);
 
   const downloadedCount = Object.values(downloads).filter(
     (state) => state.status === "complete",
   ).length;
+
+  function formatBytes(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
 
   const handleDeleteAll = () => {
     Alert.alert(t("settings.deleteConfirmTitle"), t("settings.deleteConfirmMessage"), [
@@ -231,8 +243,8 @@ export default function SettingsScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{t("settings.storage")}</Text>
         <View style={styles.row}>
-          <Text style={styles.label}>{t("settings.downloadedRoutes")}</Text>
-          <Text style={styles.value}>{downloadedCount}</Text>
+          <Text style={styles.label}>{t("settings.storageUsed")}</Text>
+          <Text style={styles.value}>{formatBytes(storageUsedBytes)}</Text>
         </View>
         {downloadedCount > 0 && (
           <Pressable style={styles.deleteButton} onPress={handleDeleteAll}>
