@@ -27,11 +27,7 @@ export function squareDirectory(col: number, row: number): Directory {
   return new Directory(gridDirectory, `${col}_${row}`);
 }
 
-export function squareLayerFile(
-  col: number,
-  row: number,
-  layer: LayerKind,
-): File {
+export function squareLayerFile(col: number, row: number, layer: LayerKind): File {
   return new File(squareDirectory(col, row), `${layer}.pmtiles`);
 }
 

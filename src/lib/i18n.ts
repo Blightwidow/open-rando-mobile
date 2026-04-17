@@ -65,8 +65,7 @@ const translations: Record<Locale, Record<string, string>> = {
       "Les fichiers nécessaires sont déjà présents ({totalSize}). Continuer ?",
     "download.sizeContinue": "Télécharger",
     "download.sizeEstimating": "Calcul de la taille…",
-    "download.sizeEstimateFailed":
-      "Impossible d'estimer la taille du téléchargement.",
+    "download.sizeEstimateFailed": "Impossible d'estimer la taille du téléchargement.",
     "notification.downloading": "Téléchargement… {progress}%",
     "notification.downloadComplete": "Téléchargement terminé ✓",
     "settings.deleteAll": "Supprimer tous les téléchargements",

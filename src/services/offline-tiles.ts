@@ -137,13 +137,7 @@ export async function downloadRouteTiles(
     );
   }
 
-  await downloadAllForRoute(
-    route.id,
-    routeManifest,
-    gridManifest,
-    onProgress,
-    signal,
-  );
+  await downloadAllForRoute(route.id, routeManifest, gridManifest, onProgress, signal);
 
   const record: RouteOfflineRecord = {
     snapshot: gridManifest.source_snapshot,
@@ -212,10 +206,7 @@ export function gcOfflineTiles(): void {
           entry.delete();
           logInfo("offline-tiles", `gc deleted grid/${entry.name}`);
         } catch (error) {
-          logWarn(
-            "offline-tiles",
-            `gc failed grid/${entry.name}: ${String(error)}`,
-          );
+          logWarn("offline-tiles", `gc failed grid/${entry.name}: ${String(error)}`);
         }
       }
     }
@@ -285,10 +276,7 @@ export function isRouteTilesReady(
   return true;
 }
 
-export function readOfflineStyleUri(
-  routeId: string,
-  theme: MapStyle,
-): string | null {
+export function readOfflineStyleUri(routeId: string, theme: MapStyle): string | null {
   const file = routeStyleFile(routeId, theme);
   return file.exists ? file.uri : null;
 }

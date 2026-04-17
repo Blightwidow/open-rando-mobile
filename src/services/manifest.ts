@@ -1,10 +1,7 @@
 import { GRID_MANIFEST_URL, routeManifestUrl } from "@/lib/constants";
 import type { GridManifest, RouteManifest } from "@/lib/types";
 import { logInfo, logError } from "@/lib/logger";
-import {
-  gridManifestCacheFile,
-  routeManifestCacheFile,
-} from "./offline-paths";
+import { gridManifestCacheFile, routeManifestCacheFile } from "./offline-paths";
 
 let cachedGridManifest: GridManifest | null = null;
 
@@ -81,10 +78,7 @@ export async function fetchRouteManifest(
   routeId: string,
   signal?: AbortSignal,
 ): Promise<RouteManifest> {
-  const fresh = await fetchJson<RouteManifest>(
-    routeManifestUrl(routeId),
-    signal,
-  );
+  const fresh = await fetchJson<RouteManifest>(routeManifestUrl(routeId), signal);
   const file = routeManifestCacheFile(routeId);
   if (!file.exists) file.create();
   file.write(JSON.stringify(fresh));

@@ -35,6 +35,8 @@ function rewritePmtilesUrls(style: MapStyleSpec): MapStyleSpec {
 }
 
 export function getStyle(style: MapStyle): MapStyleSpec {
-  const raw = (style === "dark" ? styleDarkRaw : styleLightRaw) as unknown as MapStyleSpec;
+  const raw = (style === "dark"
+    ? styleDarkRaw
+    : styleLightRaw) as unknown as MapStyleSpec;
   return rewritePmtilesUrls(raw);
 }

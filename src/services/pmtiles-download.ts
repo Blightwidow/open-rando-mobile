@@ -1,8 +1,5 @@
 import { File, Directory } from "expo-file-system";
-import {
-  createDownloadResumable,
-  type DownloadResumable,
-} from "expo-file-system/legacy";
+import { createDownloadResumable, type DownloadResumable } from "expo-file-system/legacy";
 import { MAX_PARALLEL_DOWNLOADS } from "@/lib/constants";
 import type {
   GridManifest,

@@ -3,11 +3,7 @@ import type { MapStyle } from "@/lib/map-style";
 import type { ElevationProfile, Route } from "@/lib/types";
 import { fetchElevation, fetchGeoJson } from "./api";
 import { logDebug, logInfo } from "@/lib/logger";
-import {
-  downloadRouteTiles,
-  gcOfflineTiles,
-  removeRouteTiles,
-} from "./offline-tiles";
+import { downloadRouteTiles, gcOfflineTiles, removeRouteTiles } from "./offline-tiles";
 import {
   baseRootDirectory,
   gridRootDirectory,
