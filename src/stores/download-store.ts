@@ -155,8 +155,13 @@ export const useDownloadStore = create<DownloadStore>()(
       removeDownload: (routeId: string) => {
         deleteRouteData(routeId);
         set((state) => {
-          const { [routeId]: _, ...remaining } = state.downloads;
-          return { downloads: remaining };
+          const { [routeId]: _, ...remainingDownloads } = state.downloads;
+          const remainingSections = Object.fromEntries(
+            Object.entries(state.sections).filter(
+              ([, entry]) => entry.routeId !== routeId,
+            ),
+          );
+          return { downloads: remainingDownloads, sections: remainingSections };
         });
       },
 
