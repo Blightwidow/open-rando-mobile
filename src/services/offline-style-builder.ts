@@ -159,13 +159,14 @@ export function buildOfflineStyle(
     for (const [col, row] of routeManifest.squares) {
       const key: SquareKey = `${col}_${row}`;
       if (!gridManifest.squares[key]) continue;
-      nextLayers.push({
+      const gridLayer: StyleLayer = {
         ...layer,
         id: `${layer.id}__${key}`,
         source: gridSourceId(kind, key),
         minzoom: zoom.grid_minzoom,
-        maxzoom: zoom.grid_maxzoom + 1,
-      });
+      };
+      delete gridLayer.maxzoom;
+      nextLayers.push(gridLayer);
     }
   }
 

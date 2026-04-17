@@ -285,9 +285,6 @@ export async function ensureOfflineStyle(
   routeId: string,
   theme: MapStyle,
 ): Promise<string | null> {
-  const existing = readOfflineStyleUri(routeId, theme);
-  if (existing) return existing;
-
   const record = readRouteRecord(routeId);
   if (!record) return null;
 
@@ -303,6 +300,6 @@ export async function ensureOfflineStyle(
       "offline-tiles",
       `ensureOfflineStyle failed for ${routeId}/${theme}: ${String(error)}`,
     );
-    return null;
+    return readOfflineStyleUri(routeId, theme);
   }
 }
