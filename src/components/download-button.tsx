@@ -8,6 +8,9 @@ import type { MapStyle } from "@/lib/constants";
 import { useDownload } from "@/hooks/use-download";
 import { colors, spacing, fontSize, borderRadius } from "@/lib/theme";
 import { t } from "@/lib/i18n";
+import { formatBytes } from "@/lib/format";
+import { estimateRouteDownloadBytes } from "@/services/offline-tiles";
+import { logError } from "@/lib/logger";
 
 interface DownloadButtonProps {
   route: Route;
@@ -32,15 +35,38 @@ export function DownloadButton({ route }: DownloadButtonProps) {
   const showStylePicker = () => {
     Alert.alert(t("download.chooseStyle"), undefined, [
       {
-        text: t("download.stylePlan"),
-        onPress: () => download("bright" as MapStyle),
+        text: t("download.styleLight"),
+        onPress: () => download("light" satisfies MapStyle),
       },
       {
-        text: t("download.styleTopo"),
-        onPress: () => download("liberty" as MapStyle),
+        text: t("download.styleDark"),
+        onPress: () => download("dark" satisfies MapStyle),
       },
       { text: t("settings.cancel"), style: "cancel" },
     ]);
+  };
+
+  const confirmSizeThenPickStyle = async () => {
+    try {
+      const estimate = await estimateRouteDownloadBytes(route.id);
+      const totalSize = formatBytes(estimate.totalBytes);
+      const newSize = formatBytes(estimate.newBytes);
+      const message =
+        estimate.newBytes === 0
+          ? t("download.sizeMessageNoNew", { totalSize })
+          : t("download.sizeMessage", { newSize, totalSize });
+      Alert.alert(t("download.sizeTitle"), message, [
+        { text: t("settings.cancel"), style: "cancel" },
+        { text: t("download.sizeContinue"), onPress: showStylePicker },
+      ]);
+    } catch (error) {
+      logError("download-button", `estimate failed: ${String(error)}`);
+      Toast.show({
+        type: "error",
+        text1: t("download.sizeEstimateFailed"),
+        visibilityTime: 3000,
+      });
+    }
   };
 
   const handlePress = async () => {
@@ -48,10 +74,13 @@ export function DownloadButton({ route }: DownloadButtonProps) {
     if (networkState.type === Network.NetworkStateType.CELLULAR) {
       Alert.alert(t("download.chooseStyle"), t("download.cellularWarning"), [
         { text: t("settings.cancel"), style: "cancel" },
-        { text: t("download.cellularContinue"), onPress: showStylePicker },
+        {
+          text: t("download.cellularContinue"),
+          onPress: () => void confirmSizeThenPickStyle(),
+        },
       ]);
     } else {
-      showStylePicker();
+      void confirmSizeThenPickStyle();
     }
   };
 

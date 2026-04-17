@@ -8,6 +8,8 @@ import { StyleSheet, useColorScheme } from "react-native";
 import Toast from "react-native-toast-message";
 import { useCatalogSync } from "@/hooks/use-catalog";
 import { ensureRoutesDirectory } from "@/services/offline-storage";
+import { gcOfflineTiles } from "@/services/offline-tiles";
+import { fetchGridManifest } from "@/services/manifest";
 import { useSettingsStore } from "@/stores/settings-store";
 import { ActiveDownloadsBanner } from "@/components/active-downloads-banner";
 import { t } from "@/lib/i18n";
@@ -21,6 +23,12 @@ function CatalogSyncProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     logInfo("app", "Initializing: ensuring routes directory and starting catalog sync");
     ensureRoutesDirectory();
+    try {
+      gcOfflineTiles();
+    } catch (error) {
+      logInfo("app", `gcOfflineTiles skipped: ${String(error)}`);
+    }
+    void fetchGridManifest().catch(() => {});
     syncCatalog(undefined, {
       onSuccess: (result) => {
         if (result.synced) {

@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { StyleSheet, View } from "react-native";
 import { useRouter } from "expo-router";
 import MapLibreGL, { type OnPressEvent } from "@maplibre/maplibre-react-native";
-import { TILE_STYLE_URL } from "@/lib/constants";
+import { getStyle } from "@/lib/map-style";
 import { colors } from "@/lib/theme";
 import { bboxCenter } from "@/lib/geo";
 import type { Route } from "@/lib/types";
@@ -23,6 +23,8 @@ interface ExploreMapProps {
 
 export function ExploreMap({ routes }: ExploreMapProps) {
   const router = useRouter();
+
+  const mapStyle = useMemo(() => getStyle("light"), []);
 
   const geoJson = useMemo(() => {
     const features = routes.map((route) => {
@@ -58,7 +60,7 @@ export function ExploreMap({ routes }: ExploreMapProps) {
     <View style={styles.container}>
       <MapLibreGL.MapView
         style={styles.map}
-        mapStyle={TILE_STYLE_URL}
+        mapStyle={mapStyle}
         logoEnabled={false}
         attributionEnabled={true}
         attributionPosition={{ bottom: 8, right: 8 }}

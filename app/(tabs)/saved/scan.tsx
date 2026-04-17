@@ -137,7 +137,7 @@ export default function ScanScreen() {
       const toKm = parsed.toKm ?? route.distance_km;
 
       try {
-        await startSectionDownload(route, fromKm, toKm, "liberty");
+        await startSectionDownload(route, fromKm, toKm, "light");
         Toast.show({
           type: "success",
           text1: t("toast.sectionDownloadStarted"),

@@ -70,3 +70,51 @@ export interface SectionEntry {
   toKm: number;
   savedAt: string;
 }
+
+export type LayerKind = "france" | "contours" | "hillshade";
+export type SquareKey = `${number}_${number}`;
+
+export interface PmtilesFileEntry {
+  url: string;
+  size: number;
+  minzoom: number;
+  maxzoom: number;
+}
+
+export interface LayerZoomSpec {
+  base_minzoom: number;
+  base_maxzoom: number;
+  grid_minzoom: number;
+  grid_maxzoom: number;
+}
+
+export interface GridSquareEntry {
+  bbox: [number, number, number, number];
+  files: Record<LayerKind, PmtilesFileEntry>;
+}
+
+export interface GridManifest {
+  version: number;
+  source_snapshot: string;
+  grid: {
+    bbox: [number, number, number, number];
+    cols: number;
+    rows: number;
+    pad_deg: number;
+  };
+  layers: Record<LayerKind, LayerZoomSpec>;
+  base: Record<LayerKind, PmtilesFileEntry>;
+  squares: Record<SquareKey, GridSquareEntry>;
+}
+
+export interface RouteManifest {
+  route_id: string;
+  source_snapshot: string;
+  bbox: [number, number, number, number];
+  squares: [number, number][];
+}
+
+export interface RouteOfflineRecord {
+  snapshot: string;
+  squares: SquareKey[];
+}

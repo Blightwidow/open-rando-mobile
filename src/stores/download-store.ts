@@ -237,11 +237,46 @@ export const useDownloadStore = create<DownloadStore>()(
     }),
     {
       name: "download-store",
+      version: 3,
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
         downloads: state.downloads,
         sections: state.sections,
       }),
+      migrate: (persistedState, version) => {
+        const state = (persistedState ?? {}) as {
+          downloads?: Record<string, DownloadState & { mapStyle?: string }>;
+          sections?: Record<string, SectionEntry>;
+        };
+        if (version >= 3) {
+          return {
+            downloads: state.downloads ?? {},
+            sections: state.sections ?? {},
+          };
+        }
+        // v1/v2 → v3: tile storage changed to hybrid base+grid layout.
+        // Force re-download of every route; styles must be rebuilt.
+        const migratedDownloads: Record<string, DownloadState> = {};
+        for (const [routeId, entry] of Object.entries(state.downloads ?? {})) {
+          const legacyStyle: string | undefined = entry.mapStyle;
+          let mappedStyle: MapStyle | undefined;
+          if (legacyStyle === "liberty" || legacyStyle === "light") {
+            mappedStyle = "light";
+          } else if (legacyStyle === "bright" || legacyStyle === "dark") {
+            mappedStyle = "dark";
+          }
+          migratedDownloads[routeId] = {
+            status: "idle",
+            progress: 0,
+            mapStyle: mappedStyle,
+            routeName: entry.routeName,
+          };
+        }
+        return {
+          downloads: migratedDownloads,
+          sections: state.sections ?? {},
+        };
+      },
     },
   ),
 );
