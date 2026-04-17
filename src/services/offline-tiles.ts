@@ -24,6 +24,7 @@ import {
 import { fetchGridManifest, fetchRouteManifest } from "./manifest";
 import { downloadAllForRoute } from "./pmtiles-download";
 import { buildOfflineStyle, persistOfflineStyle } from "./offline-style-builder";
+import { ensureWorldAsset } from "./world-asset";
 
 const LAYERS: LayerKind[] = ["france", "contours", "hillshade"];
 
@@ -145,7 +146,8 @@ export async function downloadRouteTiles(
   };
   writeRouteRecord(route.id, record);
 
-  const style = buildOfflineStyle(theme, routeManifest, gridManifest);
+  const worldLocalUri = await ensureWorldAsset();
+  const style = buildOfflineStyle(theme, routeManifest, gridManifest, worldLocalUri);
   persistOfflineStyle(route.id, theme, style);
 
   logInfo(
@@ -289,11 +291,12 @@ export async function ensureOfflineStyle(
   if (!record) return null;
 
   try {
-    const [gridManifest, routeManifest] = await Promise.all([
+    const [gridManifest, routeManifest, worldLocalUri] = await Promise.all([
       fetchGridManifest(),
       fetchRouteManifest(routeId),
+      ensureWorldAsset(),
     ]);
-    const style = buildOfflineStyle(theme, routeManifest, gridManifest);
+    const style = buildOfflineStyle(theme, routeManifest, gridManifest, worldLocalUri);
     return persistOfflineStyle(routeId, theme, style);
   } catch (error) {
     logError(

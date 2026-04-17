@@ -21,8 +21,6 @@ const SOURCE_TO_LAYER: Record<string, LayerKind> = {
   hillshade: "hillshade",
 };
 
-const ONLINE_ONLY_SOURCES = new Set(["protomaps_world"]);
-
 interface StyleLayer {
   id: string;
   source?: string;
@@ -89,8 +87,12 @@ export function buildOfflineStyle(
   theme: MapStyle,
   routeManifest: RouteManifest,
   gridManifest: GridManifest,
+  worldLocalUri: string | null = null,
 ): MapStyleSpec {
-  const base = getStyle(theme);
+  const base = getStyle(theme, worldLocalUri);
+  const dropSources = new Set<string>();
+  if (!worldLocalUri) dropSources.add("protomaps_world");
+
   const next: MapStyleSpec = {
     ...base,
     sources: {},
@@ -98,7 +100,7 @@ export function buildOfflineStyle(
   };
 
   for (const [id, source] of Object.entries(base.sources)) {
-    if (ONLINE_ONLY_SOURCES.has(id)) continue;
+    if (dropSources.has(id)) continue;
     if (id in SOURCE_TO_LAYER) continue;
     next.sources[id] = source;
   }
@@ -140,7 +142,7 @@ export function buildOfflineStyle(
       nextLayers.push(layer);
       continue;
     }
-    if (ONLINE_ONLY_SOURCES.has(sourceId)) continue;
+    if (dropSources.has(sourceId)) continue;
     const kind = SOURCE_TO_LAYER[sourceId];
     if (!kind) {
       nextLayers.push(layer);

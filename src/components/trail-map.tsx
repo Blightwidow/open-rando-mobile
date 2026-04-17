@@ -9,6 +9,7 @@ import { getStyle } from "@/lib/map-style";
 import { colors, fontSize, spacing, borderRadius } from "@/lib/theme";
 import { useColors } from "@/hooks/use-colors";
 import { useOfflineMapStyle } from "@/hooks/use-offline-map-style";
+import { useWorldAssetUri } from "@/hooks/use-world-asset";
 import { t } from "@/lib/i18n";
 import { formatDistance } from "@/lib/format";
 import type { GpsPosition } from "@/stores/gps-store";
@@ -103,7 +104,11 @@ export function TrailMap({
 
   const theme = mapStyleProp ?? "light";
   const offlineStyleUri = useOfflineMapStyle(routeId, theme);
-  const onlineStyle = useMemo(() => getStyle(theme), [theme]);
+  const worldLocalUri = useWorldAssetUri();
+  const onlineStyle = useMemo(
+    () => getStyle(theme, worldLocalUri),
+    [theme, worldLocalUri],
+  );
   const resolvedMapStyle = offlineStyleUri ?? onlineStyle;
 
   const styles = useMemo(

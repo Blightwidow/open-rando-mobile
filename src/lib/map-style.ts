@@ -23,20 +23,33 @@ export interface MapStyleSpec {
 }
 
 const PMTILES_DEV_PREFIX = "pmtiles:///data/";
+const WORLD_ASSET_FILENAME = "world-low.pmtiles";
 
-function rewritePmtilesUrls(style: MapStyleSpec): MapStyleSpec {
+function rewritePmtilesUrls(
+  style: MapStyleSpec,
+  worldLocalUri: string | null,
+): MapStyleSpec {
   const next = JSON.parse(JSON.stringify(style)) as MapStyleSpec;
   for (const source of Object.values(next.sources)) {
-    if (typeof source.url === "string" && source.url.startsWith(PMTILES_DEV_PREFIX)) {
-      source.url = `pmtiles://${PMTILES_BASE}/${source.url.slice(PMTILES_DEV_PREFIX.length)}`;
+    if (typeof source.url !== "string" || !source.url.startsWith(PMTILES_DEV_PREFIX)) {
+      continue;
+    }
+    const filename = source.url.slice(PMTILES_DEV_PREFIX.length);
+    if (filename === WORLD_ASSET_FILENAME && worldLocalUri) {
+      source.url = `pmtiles://${worldLocalUri}`;
+    } else {
+      source.url = `pmtiles://${PMTILES_BASE}/${filename}`;
     }
   }
   return next;
 }
 
-export function getStyle(style: MapStyle): MapStyleSpec {
+export function getStyle(
+  style: MapStyle,
+  worldLocalUri: string | null = null,
+): MapStyleSpec {
   const raw = (style === "dark"
     ? styleDarkRaw
     : styleLightRaw) as unknown as MapStyleSpec;
-  return rewritePmtilesUrls(raw);
+  return rewritePmtilesUrls(raw, worldLocalUri);
 }

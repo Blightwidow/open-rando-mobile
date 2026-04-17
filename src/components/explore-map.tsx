@@ -6,6 +6,7 @@ import { getStyle } from "@/lib/map-style";
 import { colors } from "@/lib/theme";
 import { bboxCenter } from "@/lib/geo";
 import type { Route } from "@/lib/types";
+import { useWorldAssetUri } from "@/hooks/use-world-asset";
 
 const difficultyColorStops: [string, string][] = [
   ["easy", colors.easy],
@@ -24,7 +25,8 @@ interface ExploreMapProps {
 export function ExploreMap({ routes }: ExploreMapProps) {
   const router = useRouter();
 
-  const mapStyle = useMemo(() => getStyle("light"), []);
+  const worldLocalUri = useWorldAssetUri();
+  const mapStyle = useMemo(() => getStyle("light", worldLocalUri), [worldLocalUri]);
 
   const geoJson = useMemo(() => {
     const features = routes.map((route) => {
