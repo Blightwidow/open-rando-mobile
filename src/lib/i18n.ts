@@ -37,8 +37,8 @@ const translations: Record<Locale, Record<string, string>> = {
     "download.retry": "Réessayer le téléchargement",
     "download.remove": "Supprimer",
     "download.chooseStyle": "Choisir le style de carte",
-    "download.stylePlan": "Plan (épuré)",
-    "download.styleTopo": "Topo (détaillé)",
+    "download.styleLight": "Clair",
+    "download.styleDark": "Sombre",
 
     // Saved
     "saved.title": "Randonnées sauvegardées",
@@ -58,6 +58,14 @@ const translations: Record<Locale, Record<string, string>> = {
     "download.cellularWarning":
       "Vous êtes sur données mobiles. Ce téléchargement peut consommer plusieurs dizaines de Mo.",
     "download.cellularContinue": "Continuer",
+    "download.sizeTitle": "Téléchargement hors-ligne",
+    "download.sizeMessage":
+      "Cette randonnée nécessite {newSize} à télécharger ({totalSize} au total). Continuer ?",
+    "download.sizeMessageNoNew":
+      "Les fichiers nécessaires sont déjà présents ({totalSize}). Continuer ?",
+    "download.sizeContinue": "Télécharger",
+    "download.sizeEstimating": "Calcul de la taille…",
+    "download.sizeEstimateFailed": "Impossible d'estimer la taille du téléchargement.",
     "notification.downloading": "Téléchargement… {progress}%",
     "notification.downloadComplete": "Téléchargement terminé ✓",
     "settings.deleteAll": "Supprimer tous les téléchargements",
@@ -179,8 +187,8 @@ const translations: Record<Locale, Record<string, string>> = {
     "download.retry": "Retry Download",
     "download.remove": "Remove",
     "download.chooseStyle": "Choose map style",
-    "download.stylePlan": "Plan (clean)",
-    "download.styleTopo": "Topo (detailed)",
+    "download.styleLight": "Light",
+    "download.styleDark": "Dark",
 
     // Saved
     "saved.title": "Saved Routes",
@@ -199,6 +207,14 @@ const translations: Record<Locale, Record<string, string>> = {
     "download.cellularWarning":
       "You are on mobile data. This download may use several tens of MB.",
     "download.cellularContinue": "Continue",
+    "download.sizeTitle": "Offline download",
+    "download.sizeMessage":
+      "This route needs {newSize} to download ({totalSize} total). Continue?",
+    "download.sizeMessageNoNew":
+      "All required files are already present ({totalSize}). Continue?",
+    "download.sizeContinue": "Download",
+    "download.sizeEstimating": "Estimating size…",
+    "download.sizeEstimateFailed": "Could not estimate download size.",
     "notification.downloading": "Downloading... {progress}%",
     "notification.downloadComplete": "Download complete ✓",
     "settings.deleteAll": "Delete All Downloads",

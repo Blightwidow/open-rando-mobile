@@ -136,24 +136,19 @@ export default function ScanScreen() {
       const fromKm = parsed.fromKm ?? 0;
       const toKm = parsed.toKm ?? route.distance_km;
 
-      try {
-        await startSectionDownload(route, fromKm, toKm, "liberty");
-        Toast.show({
-          type: "success",
-          text1: t("toast.sectionDownloadStarted"),
-          visibilityTime: 2000,
-        });
-        router.back();
-      } catch {
+      void startSectionDownload(route, fromKm, toKm, "light").catch(() => {
         Toast.show({
           type: "error",
           text1: t("toast.downloadError"),
           visibilityTime: 3000,
-          onHide: () => {
-            scannedRef.current = false;
-          },
         });
-      }
+      });
+      Toast.show({
+        type: "success",
+        text1: t("toast.sectionDownloadStarted"),
+        visibilityTime: 2000,
+      });
+      router.back();
     },
     [isSectionSaved, startSectionDownload, router],
   );

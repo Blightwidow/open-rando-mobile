@@ -1,14 +1,15 @@
 import { Paths, File, Directory } from "expo-file-system";
-import MapLibreGL from "@maplibre/maplibre-react-native";
+import type { MapStyle } from "@/lib/map-style";
 import type { ElevationProfile, Route } from "@/lib/types";
-import type { MapStyle } from "@/lib/constants";
-import {
-  tileStyleUrl,
-  OFFLINE_TILE_MIN_ZOOM,
-  OFFLINE_TILE_MAX_ZOOM,
-} from "@/lib/constants";
 import { fetchElevation, fetchGeoJson } from "./api";
-import { logInfo, logDebug, logError } from "@/lib/logger";
+import { logDebug, logInfo } from "@/lib/logger";
+import { downloadRouteTiles, gcOfflineTiles, removeRouteTiles } from "./offline-tiles";
+import {
+  baseRootDirectory,
+  gridRootDirectory,
+  routesRootDirectory,
+  stylesRootDirectory,
+} from "./offline-paths";
 
 const routesDirectory = new Directory(Paths.document, "hikes");
 
@@ -35,79 +36,6 @@ export function isRouteDownloaded(routeId: string): boolean {
   return geoJsonFile(routeId).exists && elevationFile(routeId).exists;
 }
 
-const ALL_MAP_STYLES: MapStyle[] = ["liberty", "bright"];
-
-export function tilePackName(routeId: string, mapStyle: MapStyle): string {
-  return `tiles-${routeId}-${mapStyle}`;
-}
-
-async function downloadTilePack(
-  routeId: string,
-  bbox: [number, number, number, number],
-  mapStyle: MapStyle,
-  onProgress?: (progress: number) => void,
-  signal?: AbortSignal,
-): Promise<void> {
-  const packName = tilePackName(routeId, mapStyle);
-  const styleURL = tileStyleUrl(mapStyle);
-
-  logInfo("offline-storage", `Downloading tile pack ${packName}`);
-
-  // Delete existing pack of this style if present
-  try {
-    await MapLibreGL.OfflineManager.deletePack(packName);
-  } catch {
-    // Pack may not exist, ignore
-  }
-
-  return new Promise<void>((resolve, reject) => {
-    // Cancellation: deleting an in-progress pack triggers the error callback
-    signal?.addEventListener("abort", () => {
-      MapLibreGL.OfflineManager.deletePack(packName).catch(() => {});
-    });
-
-    MapLibreGL.OfflineManager.createPack(
-      {
-        name: packName,
-        styleURL,
-        bounds: [
-          [bbox[2], bbox[3]], // ne [lon, lat]
-          [bbox[0], bbox[1]], // sw [lon, lat]
-        ],
-        minZoom: OFFLINE_TILE_MIN_ZOOM,
-        maxZoom: OFFLINE_TILE_MAX_ZOOM,
-      },
-      (_pack, status) => {
-        if (signal?.aborted) return;
-        onProgress?.(status.percentage / 100);
-        if (status.percentage >= 100) {
-          resolve();
-        }
-      },
-      (_pack, error) => {
-        if (signal?.aborted) {
-          // Triggered by our deletePack cancel — resolve as aborted
-          reject(new DOMException("Download cancelled", "AbortError"));
-          return;
-        }
-        logError("offline-storage", `Tile pack error: ${error.message}`);
-        reject(new Error(error.message));
-      },
-    ).catch(reject); // propagate async errors (e.g. pack already exists)
-  });
-}
-
-async function deleteTilePack(routeId: string): Promise<void> {
-  for (const mapStyle of ALL_MAP_STYLES) {
-    try {
-      await MapLibreGL.OfflineManager.deletePack(tilePackName(routeId, mapStyle));
-      logInfo("offline-storage", `Deleted tile pack ${tilePackName(routeId, mapStyle)}`);
-    } catch {
-      // Pack may not exist
-    }
-  }
-}
-
 export async function downloadRouteData(
   route: Route,
   mapStyle: MapStyle,
@@ -125,7 +53,6 @@ export async function downloadRouteData(
 
   onProgress?.(0.05);
 
-  // Phase 1: GeoJSON + elevation (0% → 30%)
   const [geoJson, elevation] = await Promise.all([
     fetchGeoJson(route.id, signal),
     fetchElevation(route.id, signal),
@@ -148,13 +75,11 @@ export async function downloadRouteData(
 
   onProgress?.(0.3);
 
-  // Phase 2: Tile pack (30% → 100%)
-  await downloadTilePack(
-    route.id,
-    route.bbox,
+  await downloadRouteTiles(
+    route,
     mapStyle,
-    (tileProgress) => {
-      onProgress?.(0.3 + tileProgress * 0.7);
+    (tileFraction) => {
+      onProgress?.(0.3 + tileFraction * 0.7);
     },
     signal,
   );
@@ -165,7 +90,16 @@ export async function downloadRouteData(
 
 export function getStorageUsedBytes(): number {
   ensureRoutesDirectory();
-  return routesDirectory.size ?? 0;
+  let total = routesDirectory.size ?? 0;
+  for (const dir of [
+    baseRootDirectory(),
+    gridRootDirectory(),
+    routesRootDirectory(),
+    stylesRootDirectory(),
+  ]) {
+    if (dir.exists) total += dir.size ?? 0;
+  }
+  return total;
 }
 
 export function deleteRouteData(routeId: string): void {
@@ -174,8 +108,12 @@ export function deleteRouteData(routeId: string): void {
   if (directory.exists) {
     directory.delete();
   }
-  // Fire-and-forget tile pack deletion
-  deleteTilePack(routeId).catch(() => {});
+  removeRouteTiles(routeId);
+  try {
+    gcOfflineTiles();
+  } catch {
+    // best-effort
+  }
 }
 
 export async function readGeoJson(routeId: string): Promise<unknown> {

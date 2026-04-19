@@ -1,17 +1,12 @@
 export const BASE_DATA_URL = "https://rando.dammaretz.fr/data";
 export const CATALOG_URL = `${BASE_DATA_URL}/catalog.json`;
 
-export const TILE_STYLE_LIBERTY = "https://tiles.openfreemap.org/styles/liberty";
-export const TILE_STYLE_BRIGHT = "https://tiles.openfreemap.org/styles/bright";
+export type { MapStyle } from "@/lib/map-style";
+export { ALL_MAP_STYLES } from "@/lib/map-style";
 
-/** Default style for online-only maps (explore tab) */
-export const TILE_STYLE_URL = TILE_STYLE_LIBERTY;
-
-export type MapStyle = "liberty" | "bright";
-
-export function tileStyleUrl(style: MapStyle): string {
-  return style === "bright" ? TILE_STYLE_BRIGHT : TILE_STYLE_LIBERTY;
+export const GRID_MANIFEST_URL = `${BASE_DATA_URL}/grid.json`;
+export function routeManifestUrl(routeId: string): string {
+  return `${BASE_DATA_URL}/routes/${routeId}/pmtiles.json`;
 }
 
-export const OFFLINE_TILE_MIN_ZOOM = 7;
-export const OFFLINE_TILE_MAX_ZOOM = 16;
+export const MAX_PARALLEL_DOWNLOADS = 4;

@@ -246,6 +246,7 @@ export default function OfflineRouteDetailScreen() {
             bbox={route.bbox}
             pois={route.pois}
             mapStyle={downloadMapStyle}
+            routeId={route.id}
           />
         </View>
       )}

@@ -4,10 +4,12 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import MapLibreGL from "@maplibre/maplibre-react-native";
 import type { RegionPayload } from "@maplibre/maplibre-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { TILE_STYLE_URL, tileStyleUrl } from "@/lib/constants";
 import type { MapStyle } from "@/lib/constants";
+import { getStyle } from "@/lib/map-style";
 import { colors, fontSize, spacing, borderRadius } from "@/lib/theme";
 import { useColors } from "@/hooks/use-colors";
+import { useOfflineMapStyle } from "@/hooks/use-offline-map-style";
+import { useWorldAssetUri } from "@/hooks/use-world-asset";
 import { t } from "@/lib/i18n";
 import { formatDistance } from "@/lib/format";
 import type { GpsPosition } from "@/stores/gps-store";
@@ -75,6 +77,7 @@ interface TrailMapProps {
   userPosition?: GpsPosition | null;
   followUserLocation?: boolean;
   mapStyle?: MapStyle;
+  routeId?: string;
   showScaleBar?: boolean;
   style?: ViewStyle;
   onPoiPanelHeightChange?: (height: number) => void;
@@ -87,6 +90,7 @@ export function TrailMap({
   userPosition,
   followUserLocation,
   mapStyle: mapStyleProp,
+  routeId,
   showScaleBar,
   style,
   onPoiPanelHeightChange,
@@ -97,6 +101,15 @@ export function TrailMap({
   const hasCenteredRef = useRef(false);
   const [selectedPoi, setSelectedPoi] = useState<SelectedPoi | null>(null);
   const [scaleInfo, setScaleInfo] = useState<ScaleInfo | null>(null);
+
+  const theme = mapStyleProp ?? "light";
+  const offlineStyleUri = useOfflineMapStyle(routeId, theme);
+  const worldLocalUri = useWorldAssetUri();
+  const onlineStyle = useMemo(
+    () => getStyle(theme, worldLocalUri),
+    [theme, worldLocalUri],
+  );
+  const resolvedMapStyle = offlineStyleUri ?? onlineStyle;
 
   const styles = useMemo(
     () =>
@@ -323,7 +336,7 @@ export function TrailMap({
     <View style={[styles.container, style]}>
       <MapLibreGL.MapView
         style={styles.map}
-        mapStyle={mapStyleProp ? tileStyleUrl(mapStyleProp) : TILE_STYLE_URL}
+        mapStyle={resolvedMapStyle}
         logoEnabled={false}
         attributionEnabled={true}
         attributionPosition={{ bottom: 8, right: 8 }}
