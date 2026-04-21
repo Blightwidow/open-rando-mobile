@@ -1,8 +1,16 @@
 import { Platform, requireOptionalNativeModule } from "expo-modules-core";
 
 interface DownloadServiceNativeModule {
-  startDownloadNotification(id: string, title: string, progressText: string): Promise<void>;
-  updateDownloadProgress(id: string, progress: number, progressText: string): Promise<void>;
+  startDownloadNotification(
+    id: string,
+    title: string,
+    progressText: string,
+  ): Promise<void>;
+  updateDownloadProgress(
+    id: string,
+    progress: number,
+    progressText: string,
+  ): Promise<void>;
   completeDownloadNotification(id: string, completeText: string): Promise<void>;
   cancelDownloadNotification(id: string): Promise<void>;
 }

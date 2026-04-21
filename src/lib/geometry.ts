@@ -21,7 +21,12 @@ function haversineKm(a: Coord, b: Coord): number {
 function extractLineStrings(geoJson: unknown): Coord[][] {
   const result: Coord[][] = [];
   if (!geoJson || typeof geoJson !== "object") return result;
-  const obj = geoJson as { type?: string; features?: unknown[]; geometry?: unknown; coordinates?: unknown };
+  const obj = geoJson as {
+    type?: string;
+    features?: unknown[];
+    geometry?: unknown;
+    coordinates?: unknown;
+  };
 
   if (obj.type === "FeatureCollection" && Array.isArray(obj.features)) {
     for (const feature of obj.features) {

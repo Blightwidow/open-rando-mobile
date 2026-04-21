@@ -40,9 +40,7 @@ export function useSectionDownload(section: SectionEntry) {
   const downloadState = useDownloadStore((state) =>
     state.getSectionDownloadState(section.sectionId),
   );
-  const cancelSectionDownload = useDownloadStore(
-    (state) => state.cancelSectionDownload,
-  );
+  const cancelSectionDownload = useDownloadStore((state) => state.cancelSectionDownload);
   const removeSection = useDownloadStore((state) => state.removeSection);
 
   const remove = useCallback(() => {

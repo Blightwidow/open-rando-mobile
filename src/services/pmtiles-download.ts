@@ -242,10 +242,7 @@ async function runDownload(
     return;
   }
 
-  logInfo(
-    "pmtiles-dl",
-    `${label}: ${items.length} files, ${totalBytes} bytes total`,
-  );
+  logInfo("pmtiles-dl", `${label}: ${items.length} files, ${totalBytes} bytes total`);
 
   let downloadedBytes = 0;
   let lastEmittedFraction = 0;
