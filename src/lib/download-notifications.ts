@@ -1,14 +1,20 @@
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
+import {
+  cancelDownloadNotification as nativeCancel,
+  completeDownloadNotification as nativeComplete,
+  isNativeDownloadServiceSupported,
+  startDownloadNotification as nativeStart,
+  updateDownloadProgress as nativeUpdate,
+} from "../../modules/download-service";
 import { logDebug } from "@/lib/logger";
 import { t } from "@/lib/i18n";
 
-const CHANNEL_ID = "downloads";
+const IOS_CHANNEL_ID = "downloads";
 const THROTTLE_PERCENT = 10;
 
-// Module-level tracking (in-memory, not persisted)
-const activeNotifIds = new Map<string, string>();
-const lastNotifPercent = new Map<string, number>();
+const lastPercent = new Map<string, number>();
+const startedIds = new Set<string>();
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -20,9 +26,12 @@ Notifications.setNotificationHandler({
   }),
 });
 
-async function ensureAndroidChannel(): Promise<void> {
-  if (Platform.OS !== "android") return;
-  await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
+async function ensureIosSetup(): Promise<void> {
+  if (Platform.OS === "android") {
+    // Native module handles channel creation.
+    return;
+  }
+  await Notifications.setNotificationChannelAsync(IOS_CHANNEL_ID, {
     name: "Downloads",
     importance: Notifications.AndroidImportance.LOW,
     sound: null,
@@ -30,7 +39,7 @@ async function ensureAndroidChannel(): Promise<void> {
 }
 
 export async function requestNotificationPermission(): Promise<boolean> {
-  await ensureAndroidChannel();
+  await ensureIosSetup();
   const { status: existing } = await Notifications.getPermissionsAsync();
   if (existing === "granted") return true;
   const { status } = await Notifications.requestPermissionsAsync();
@@ -38,65 +47,89 @@ export async function requestNotificationPermission(): Promise<boolean> {
 }
 
 export async function updateDownloadNotification(
-  routeId: string,
-  routeName: string,
+  id: string,
+  title: string,
   progress: number,
 ): Promise<void> {
-  const percent = Math.round(progress * 100);
-  const lastPercent = lastNotifPercent.get(routeId) ?? -1;
+  const percent = Math.max(0, Math.min(100, Math.round(progress * 100)));
+  const last = lastPercent.get(id) ?? -1;
+  if (percent < last + THROTTLE_PERCENT && percent < 100) return;
+  lastPercent.set(id, percent);
 
-  // Throttle: only update every THROTTLE_PERCENT points
-  if (percent < lastPercent + THROTTLE_PERCENT && percent < 100) return;
-  lastNotifPercent.set(routeId, percent);
+  const progressText = t("notification.downloading", { progress: percent });
 
-  // Dismiss previous notification for this route
-  const oldId = activeNotifIds.get(routeId);
-  if (oldId) {
+  if (isNativeDownloadServiceSupported()) {
     try {
-      await Notifications.dismissNotificationAsync(oldId);
-    } catch {}
+      if (!startedIds.has(id)) {
+        startedIds.add(id);
+        await nativeStart(id, title, progressText);
+      }
+      await nativeUpdate(id, progress, progressText);
+    } catch (error) {
+      logDebug("notifications", `native update failed: ${String(error)}`);
+    }
+    return;
   }
 
   try {
-    const notifId = await Notifications.scheduleNotificationAsync({
+    await Notifications.scheduleNotificationAsync({
+      identifier: `download-${id}`,
       content: {
-        title: routeName,
-        body: t("notification.downloading", { progress: percent }),
-        data: { routeId },
+        title,
+        body: progressText,
+        data: { id },
       },
       trigger: null,
     });
-    activeNotifIds.set(routeId, notifId);
-    logDebug("notifications", `Download notification updated: ${routeId} ${percent}%`);
   } catch (error) {
-    logDebug("notifications", `Failed to show notification: ${String(error)}`);
+    logDebug("notifications", `ios schedule failed: ${String(error)}`);
   }
 }
 
 export async function showDownloadCompleteNotification(
-  routeId: string,
-  routeName: string,
+  id: string,
+  title: string,
 ): Promise<void> {
-  await dismissDownloadNotification(routeId);
+  lastPercent.delete(id);
+  const completeText = t("notification.downloadComplete");
+
+  if (isNativeDownloadServiceSupported()) {
+    startedIds.delete(id);
+    try {
+      await nativeComplete(id, completeText);
+    } catch (error) {
+      logDebug("notifications", `native complete failed: ${String(error)}`);
+    }
+    return;
+  }
+
   try {
     await Notifications.scheduleNotificationAsync({
+      identifier: `download-${id}`,
       content: {
-        title: routeName,
-        body: t("notification.downloadComplete"),
-        data: { routeId },
+        title,
+        body: completeText,
+        data: { id },
       },
       trigger: null,
     });
   } catch {}
 }
 
-export async function dismissDownloadNotification(routeId: string): Promise<void> {
-  const notifId = activeNotifIds.get(routeId);
-  if (notifId) {
+export async function dismissDownloadNotification(id: string): Promise<void> {
+  lastPercent.delete(id);
+
+  if (isNativeDownloadServiceSupported()) {
+    startedIds.delete(id);
     try {
-      await Notifications.dismissNotificationAsync(notifId);
-    } catch {}
-    activeNotifIds.delete(routeId);
+      await nativeCancel(id);
+    } catch (error) {
+      logDebug("notifications", `native cancel failed: ${String(error)}`);
+    }
+    return;
   }
-  lastNotifPercent.delete(routeId);
+
+  try {
+    await Notifications.dismissNotificationAsync(`download-${id}`);
+  } catch {}
 }

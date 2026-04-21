@@ -162,8 +162,8 @@ async function downloadPmtilesFile(
     : new Error(`download failed: ${item.label}`);
 }
 
-function buildItems(
-  routeManifest: RouteManifest,
+function buildItemsForSquares(
+  squares: [number, number][],
   gridManifest: GridManifest,
 ): DownloadItem[] {
   const items: DownloadItem[] = [];
@@ -177,7 +177,7 @@ function buildItems(
     });
   }
 
-  for (const [col, row] of routeManifest.squares) {
+  for (const [col, row] of squares) {
     const key: SquareKey = `${col}_${row}`;
     const square = gridManifest.squares[key];
     if (!square) {
@@ -201,6 +201,13 @@ function buildItems(
   return items;
 }
 
+function buildItems(
+  routeManifest: RouteManifest,
+  gridManifest: GridManifest,
+): DownloadItem[] {
+  return buildItemsForSquares(routeManifest.squares, gridManifest);
+}
+
 async function runWithConcurrency(
   items: DownloadItem[],
   limit: number,
@@ -221,16 +228,14 @@ async function runWithConcurrency(
   await Promise.all(runners);
 }
 
-export async function downloadAllForRoute(
-  routeId: string,
-  routeManifest: RouteManifest,
-  gridManifest: GridManifest,
+async function runDownload(
+  label: string,
+  items: DownloadItem[],
   onProgress: (fraction: number) => void,
   signal?: AbortSignal,
 ): Promise<void> {
   ensureOfflineDirectories();
 
-  const items = buildItems(routeManifest, gridManifest);
   const totalBytes = items.reduce((sum, item) => sum + item.entry.size, 0);
   if (totalBytes === 0) {
     onProgress(1);
@@ -239,7 +244,7 @@ export async function downloadAllForRoute(
 
   logInfo(
     "pmtiles-dl",
-    `route ${routeId}: ${items.length} files, ${totalBytes} bytes total`,
+    `${label}: ${items.length} files, ${totalBytes} bytes total`,
   );
 
   let downloadedBytes = 0;
@@ -269,4 +274,34 @@ export async function downloadAllForRoute(
   });
 
   onProgress(1);
+}
+
+export async function downloadAllForRoute(
+  routeId: string,
+  routeManifest: RouteManifest,
+  gridManifest: GridManifest,
+  onProgress: (fraction: number) => void,
+  signal?: AbortSignal,
+): Promise<void> {
+  await runDownload(
+    `route ${routeId}`,
+    buildItems(routeManifest, gridManifest),
+    onProgress,
+    signal,
+  );
+}
+
+export async function downloadAllForSquares(
+  label: string,
+  squares: [number, number][],
+  gridManifest: GridManifest,
+  onProgress: (fraction: number) => void,
+  signal?: AbortSignal,
+): Promise<void> {
+  await runDownload(
+    label,
+    buildItemsForSquares(squares, gridManifest),
+    onProgress,
+    signal,
+  );
 }

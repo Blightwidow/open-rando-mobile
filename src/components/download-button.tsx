@@ -1,4 +1,3 @@
-import { useEffect, useRef } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import Toast from "react-native-toast-message";
@@ -18,19 +17,6 @@ interface DownloadButtonProps {
 
 export function DownloadButton({ route }: DownloadButtonProps) {
   const { status, progress, error, download, cancel } = useDownload(route);
-  const prevStatusRef = useRef(status);
-
-  useEffect(() => {
-    if (prevStatusRef.current === "downloading" && status === "error") {
-      Toast.show({
-        type: "error",
-        text1: t("toast.downloadError"),
-        text2: error,
-        visibilityTime: 4000,
-      });
-    }
-    prevStatusRef.current = status;
-  }, [status, error]);
 
   const showStylePicker = () => {
     Alert.alert(t("download.chooseStyle"), undefined, [

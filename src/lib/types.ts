@@ -69,6 +69,9 @@ export interface SectionEntry {
   fromKm: number;
   toKm: number;
   savedAt: string;
+  bbox?: [number, number, number, number];
+  mapStyle?: MapStyle;
+  routeName?: string;
 }
 
 export type LayerKind = "france" | "contours" | "hillshade";
@@ -117,4 +120,11 @@ export interface RouteManifest {
 export interface RouteOfflineRecord {
   snapshot: string;
   squares: SquareKey[];
+}
+
+export interface SectionOfflineRecord {
+  routeId: string;
+  snapshot: string;
+  squares: SquareKey[];
+  bbox: [number, number, number, number];
 }

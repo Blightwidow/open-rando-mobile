@@ -12,7 +12,6 @@ import { gcOfflineTiles } from "@/services/offline-tiles";
 import { fetchGridManifest } from "@/services/manifest";
 import { ensureWorldAsset } from "@/services/world-asset";
 import { useSettingsStore } from "@/stores/settings-store";
-import { ActiveDownloadsBanner } from "@/components/active-downloads-banner";
 import { t } from "@/lib/i18n";
 import { logInfo } from "@/lib/logger";
 
@@ -68,7 +67,6 @@ export default function RootLayout() {
               <Stack.Screen name="(tabs)" />
             </Stack>
             <StatusBar style={isDark ? "light" : "dark"} />
-            <ActiveDownloadsBanner />
           </CatalogSyncProvider>
           <Toast />
         </QueryClientProvider>
