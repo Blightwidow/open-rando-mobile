@@ -18,6 +18,7 @@ import {
   showDownloadCompleteNotification,
   dismissDownloadNotification,
 } from "@/lib/download-notifications";
+import { logError } from "@/lib/logger";
 
 // Module-level maps: not persisted, reset on app restart
 const activeCancellers = new Map<string, AbortController>();
@@ -123,6 +124,11 @@ export const useDownloadStore = create<DownloadStore>()(
 
           if (controller.signal.aborted) return;
 
+          logError(
+            "download-store",
+            `route ${route.id} failed: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`,
+          );
+
           set((state) => ({
             downloads: {
               ...state.downloads,
@@ -206,6 +212,19 @@ export const useDownloadStore = create<DownloadStore>()(
               routeName: route.path_name,
             },
           },
+          sections: {
+            ...state.sections,
+            [sectionId]: {
+              sectionId,
+              routeId: route.id,
+              slug: route.slug,
+              fromKm,
+              toKm,
+              savedAt: new Date().toISOString(),
+              mapStyle,
+              routeName: route.path_name,
+            },
+          },
         }));
 
         void requestNotificationPermission();
@@ -269,6 +288,11 @@ export const useDownloadStore = create<DownloadStore>()(
           activeSectionCancellers.delete(sectionId);
           if (controller.signal.aborted) return;
 
+          logError(
+            "download-store",
+            `section ${sectionId} failed: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`,
+          );
+
           set((state) => ({
             sectionDownloads: {
               ...state.sectionDownloads,
@@ -293,11 +317,18 @@ export const useDownloadStore = create<DownloadStore>()(
           activeSectionCancellers.delete(sectionId);
         }
         void dismissDownloadNotification(sectionId);
+        const section = get().sections[sectionId];
+        if (section) {
+          try {
+            deleteSectionData(section.routeId, sectionId);
+          } catch {
+            // best-effort
+          }
+        }
         set((state) => {
-          const current = state.sectionDownloads[sectionId];
-          if (!current || current.status !== "downloading") return state;
-          const { [sectionId]: _dropped, ...rest } = state.sectionDownloads;
-          return { sectionDownloads: rest };
+          const { [sectionId]: _dropped, ...restDownloads } = state.sectionDownloads;
+          const { [sectionId]: _sec, ...restSections } = state.sections;
+          return { sectionDownloads: restDownloads, sections: restSections };
         });
       },
 
@@ -327,8 +358,9 @@ export const useDownloadStore = create<DownloadStore>()(
 
       isSectionSaved: (routeId: string, fromKm: number, toKm: number): boolean => {
         const sectionId = buildSectionId(routeId, fromKm, toKm);
-        const saved = sectionId in get().sections;
-        if (!saved) return false;
+        if (!(sectionId in get().sections)) return false;
+        const dl = get().sectionDownloads[sectionId];
+        if (dl?.status === "downloading") return true;
         return isSectionDownloaded(routeId, sectionId);
       },
     }),

@@ -147,10 +147,15 @@ export async function downloadSectionData(
 
   onProgress?.(0.15);
 
+  logInfo("offline-storage", `Slicing section ${sectionId}`);
   const sliced = sliceRouteByKm(geoJson, elevation, fromKm, toKm);
   if (!sliced) {
     throw new Error(`section ${sectionId}: slicing produced no geometry`);
   }
+  logInfo(
+    "offline-storage",
+    `Section ${sectionId} sliced: bbox=${JSON.stringify(sliced.bbox)}`,
+  );
 
   const geoJsonTarget = sectionGeoJsonFile(route.id, sectionId);
   const elevationTarget = sectionElevationFile(route.id, sectionId);
