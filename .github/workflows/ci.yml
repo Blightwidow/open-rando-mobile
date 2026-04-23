@@ -70,7 +70,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: trainrando-apk-${{ github.sha }}
+          name: trainrando-apk-${{ github.event.pull_request.head.sha || github.sha }}
           path: android/app/build/outputs/apk/release/app-release.apk
 
       - name: Post APK download QR code on PR
@@ -78,11 +78,12 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            const headSha = context.payload.pull_request.head.sha;
             const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}/artifacts`;
             const artifactUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
             const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(artifactUrl)}`;
-            const shortSha = context.sha.substring(0, 7);
-            const artifactName = `trainrando-apk-${context.sha}`;
+            const shortSha = headSha.substring(0, 7);
+            const artifactName = `trainrando-apk-${headSha}`;
 
             const body = [
               `### 📱 Test APK ready`,
