@@ -142,8 +142,15 @@ function sliceElevation(
   fromKm: number,
   toKm: number,
 ): ElevationProfile {
-  const distances = elevation.distances_km;
-  if (distances.length === 0) return elevation;
+  const distances = elevation.distances_km ?? [];
+  if (distances.length === 0) {
+    return {
+      distances_km: [],
+      elevations_m: [],
+      times_min: [],
+      station_positions_km: [],
+    };
+  }
 
   let startIndex = 0;
   while (startIndex < distances.length - 1 && distances[startIndex + 1] < fromKm) {
@@ -154,10 +161,10 @@ function sliceElevation(
     endIndex -= 1;
   }
 
-  const slicedDistances = elevation.distances_km.slice(startIndex, endIndex + 1);
-  const slicedElevations = elevation.elevations_m.slice(startIndex, endIndex + 1);
-  const slicedTimes = elevation.times_min.slice(startIndex, endIndex + 1);
-  const stationPositions = elevation.station_positions_km.filter(
+  const slicedDistances = distances.slice(startIndex, endIndex + 1);
+  const slicedElevations = (elevation.elevations_m ?? []).slice(startIndex, endIndex + 1);
+  const slicedTimes = (elevation.times_min ?? []).slice(startIndex, endIndex + 1);
+  const stationPositions = (elevation.station_positions_km ?? []).filter(
     (km) => km >= fromKm && km <= toKm,
   );
 
