@@ -49,7 +49,7 @@ export interface ElevationProfile {
   distances_km: number[];
   elevations_m: number[];
   times_min: number[];
-  station_positions_km: number[];
+  station_positions_km?: number[];
 }
 
 export type DownloadStatus = "idle" | "downloading" | "complete" | "error";
