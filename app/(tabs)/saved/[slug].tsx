@@ -27,12 +27,24 @@ export default function OfflineRouteDetailScreen() {
   useLocale();
   const colors = useColors();
   const router = useRouter();
-  const { slug } = useLocalSearchParams<{ slug: string }>();
-  const { route, geoJson, elevation, isLoading, error } = useOfflineRoute(slug);
+  const { slug, section: sectionParam } = useLocalSearchParams<{
+    slug: string;
+    section?: string;
+  }>();
+  const sectionId = typeof sectionParam === "string" ? sectionParam : undefined;
+  const { route, geoJson, elevation, isLoading, error } = useOfflineRoute(
+    slug,
+    sectionId,
+  );
   const removeDownload = useDownloadStore((state) => state.removeDownload);
-  const downloadMapStyle = useDownloadStore((state) =>
+  const removeSection = useDownloadStore((state) => state.removeSection);
+  const section = useDownloadStore((state) =>
+    sectionId ? state.sections[sectionId] : undefined,
+  );
+  const fullDownloadMapStyle = useDownloadStore((state) =>
     route?.id ? state.getDownloadState(route.id).mapStyle : undefined,
   );
+  const downloadMapStyle = section?.mapStyle ?? fullDownloadMapStyle;
   const { request: requestLocationPermission } = useLocationPermission();
   const startFollowing = useGpsStore((state) => state.startFollowing);
   const isTracking = useGpsStore((state) => state.isTracking);
@@ -167,7 +179,8 @@ export default function OfflineRouteDetailScreen() {
           text: t("download.remove"),
           style: "destructive",
           onPress: () => {
-            removeDownload(route.id);
+            if (sectionId) removeSection(sectionId);
+            else removeDownload(route.id);
             router.back();
           },
         },
@@ -210,7 +223,12 @@ export default function OfflineRouteDetailScreen() {
       ) : null}
 
       <View style={styles.statsGrid}>
-        <StatItem label={t("route.distance")} value={formatDistance(route.distance_km)} />
+        <StatItem
+          label={t("route.distance")}
+          value={formatDistance(
+            section ? section.toKm - section.fromKm : route.distance_km,
+          )}
+        />
         <StatItem
           label={t("route.elevationGain")}
           value={formatElevation(route.elevation_gain_m)}
@@ -243,7 +261,7 @@ export default function OfflineRouteDetailScreen() {
           <Text style={styles.sectionTitle}>{t("route.trailMap")}</Text>
           <TrailMap
             geoJson={geoJson}
-            bbox={route.bbox}
+            bbox={section?.bbox ?? route.bbox}
             pois={route.pois}
             mapStyle={downloadMapStyle}
             routeId={route.id}

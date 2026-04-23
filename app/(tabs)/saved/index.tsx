@@ -227,7 +227,13 @@ export default function SavedScreen() {
       renderItem={({ item }) => (
         <Pressable
           style={styles.card}
-          onPress={() => router.push(`/saved/${item.route.slug}`)}
+          onPress={() =>
+            router.push(
+              item.type === "section"
+                ? `/saved/${item.route.slug}?section=${encodeURIComponent(item.section.sectionId)}`
+                : `/saved/${item.route.slug}`,
+            )
+          }
         >
           <View style={styles.cardHeader}>
             <View style={styles.pathBadge}>

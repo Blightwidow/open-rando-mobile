@@ -1,0 +1,32 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+group = 'fr.dammaretz.trainrando.downloadservice'
+version = '1.0.0'
+
+def expoModulesCorePlugin = new File(project(":expo-modules-core").projectDir.absolutePath, "ExpoModulesCorePlugin.gradle")
+apply from: expoModulesCorePlugin
+applyKotlinExpoModulesCorePlugin()
+useCoreDependencies()
+useExpoPublishing()
+
+android {
+  namespace 'fr.dammaretz.trainrando.downloadservice'
+
+  compileSdkVersion safeExtGet('compileSdkVersion', 35)
+
+  defaultConfig {
+    minSdkVersion safeExtGet('minSdkVersion', 24)
+    targetSdkVersion safeExtGet('targetSdkVersion', 35)
+  }
+
+  sourceSets {
+    main {
+      java.srcDirs = ['src/main/java']
+    }
+  }
+}
+
+dependencies {
+  implementation 'androidx.core:core-ktx:1.13.1'
+}
