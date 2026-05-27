@@ -5,6 +5,7 @@ import type { MapStyle } from "@/lib/map-style";
 const baseDirectory = new Directory(Paths.document, "base");
 const gridDirectory = new Directory(Paths.document, "grid");
 const routesDirectory = new Directory(Paths.document, "routes");
+const sectionsDirectory = new Directory(Paths.document, "sections");
 const stylesDirectory = new Directory(Paths.document, "styles");
 const gridManifestFile = new File(Paths.document, "grid.json");
 
@@ -13,6 +14,7 @@ export function ensureOfflineDirectories(): void {
     baseDirectory,
     gridDirectory,
     routesDirectory,
+    sectionsDirectory,
     stylesDirectory,
   ]) {
     if (!directory.exists) directory.create();
@@ -39,6 +41,10 @@ export function routeManifestCacheFile(routeId: string): File {
   return new File(routesDirectory, `${routeId}.pmtiles.json`);
 }
 
+export function sectionRecordFile(sectionId: string): File {
+  return new File(sectionsDirectory, `${sectionId}.json`);
+}
+
 export function routeStyleDirectory(routeId: string): Directory {
   return new Directory(stylesDirectory, routeId);
 }
@@ -61,6 +67,10 @@ export function baseRootDirectory(): Directory {
 
 export function routesRootDirectory(): Directory {
   return routesDirectory;
+}
+
+export function sectionsRootDirectory(): Directory {
+  return sectionsDirectory;
 }
 
 export function stylesRootDirectory(): Directory {

@@ -1,6 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { getRouteBySlug } from "@/services/database";
-import { readGeoJson, readElevation } from "@/services/offline-storage";
+import {
+  readElevation,
+  readGeoJson,
+  readSectionElevation,
+  readSectionGeoJson,
+} from "@/services/offline-storage";
 import { useDownloadStore } from "@/stores/download-store";
 import type { Route, ElevationProfile, DownloadState } from "@/lib/types";
 
@@ -14,7 +19,7 @@ interface OfflineRouteData {
   error: Error | null;
 }
 
-export function useOfflineRoute(slug: string): OfflineRouteData {
+export function useOfflineRoute(slug: string, sectionId?: string): OfflineRouteData {
   const routeQuery = useQuery({
     queryKey: ["route", slug],
     queryFn: () => getRouteBySlug(slug),
@@ -22,21 +27,44 @@ export function useOfflineRoute(slug: string): OfflineRouteData {
   });
 
   const routeId = routeQuery.data?.id;
-  const downloadState = useDownloadStore((state) =>
+  const fullDownloadState = useDownloadStore((state) =>
     routeId ? state.getDownloadState(routeId) : IDLE_DOWNLOAD_STATE,
   );
-  const isDownloaded = downloadState.status === "complete";
+  const sectionDownloadState = useDownloadStore((state) =>
+    sectionId ? state.getSectionDownloadState(sectionId) : IDLE_DOWNLOAD_STATE,
+  );
+
+  const isSectionView = !!sectionId;
+  const isReady = isSectionView
+    ? sectionDownloadState.status === "complete"
+    : fullDownloadState.status === "complete";
 
   const geoJsonQuery = useQuery({
-    queryKey: ["offline-geojson", routeId],
-    queryFn: () => (routeId ? readGeoJson(routeId) : null),
-    enabled: !!routeId && isDownloaded,
+    queryKey: isSectionView
+      ? ["offline-section-geojson", routeId, sectionId]
+      : ["offline-geojson", routeId],
+    queryFn: () => {
+      if (!routeId) return null;
+      if (isSectionView && sectionId) {
+        return readSectionGeoJson(routeId, sectionId);
+      }
+      return readGeoJson(routeId);
+    },
+    enabled: !!routeId && isReady,
   });
 
   const elevationQuery = useQuery({
-    queryKey: ["offline-elevation", routeId],
-    queryFn: () => (routeId ? readElevation(routeId) : null),
-    enabled: !!routeId && isDownloaded,
+    queryKey: isSectionView
+      ? ["offline-section-elevation", routeId, sectionId]
+      : ["offline-elevation", routeId],
+    queryFn: () => {
+      if (!routeId) return null;
+      if (isSectionView && sectionId) {
+        return readSectionElevation(routeId, sectionId);
+      }
+      return readElevation(routeId);
+    },
+    enabled: !!routeId && isReady,
   });
 
   return {

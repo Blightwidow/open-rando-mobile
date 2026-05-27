@@ -1,0 +1,7 @@
+{
+  "name": "download-service",
+  "version": "1.0.0",
+  "description": "Local Expo module: Android foreground service + ongoing progress notification for downloads",
+  "main": "index.ts",
+  "private": true
+}

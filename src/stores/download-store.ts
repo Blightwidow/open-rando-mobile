@@ -6,8 +6,11 @@ import type { MapStyle } from "@/lib/constants";
 import { buildSectionId } from "@/lib/qr-utils";
 import {
   downloadRouteData,
+  downloadSectionData,
   deleteRouteData,
+  deleteSectionData,
   isRouteDownloaded,
+  isSectionDownloaded,
 } from "@/services/offline-storage";
 import {
   requestNotificationPermission,
@@ -15,13 +18,16 @@ import {
   showDownloadCompleteNotification,
   dismissDownloadNotification,
 } from "@/lib/download-notifications";
+import { logError } from "@/lib/logger";
 
-// Module-level map: not persisted, resets on app restart
+// Module-level maps: not persisted, reset on app restart
 const activeCancellers = new Map<string, AbortController>();
+const activeSectionCancellers = new Map<string, AbortController>();
 
 interface DownloadStore {
   downloads: Record<string, DownloadState>;
   sections: Record<string, SectionEntry>;
+  sectionDownloads: Record<string, DownloadState>;
   startDownload: (route: Route, mapStyle: MapStyle) => Promise<void>;
   cancelDownload: (routeId: string) => void;
   removeDownload: (routeId: string) => void;
@@ -33,7 +39,9 @@ interface DownloadStore {
     toKm: number,
     mapStyle: MapStyle,
   ) => Promise<void>;
+  cancelSectionDownload: (sectionId: string) => void;
   removeSection: (sectionId: string) => void;
+  getSectionDownloadState: (sectionId: string) => DownloadState;
   isSectionSaved: (routeId: string, fromKm: number, toKm: number) => boolean;
 }
 
@@ -44,9 +52,14 @@ export const useDownloadStore = create<DownloadStore>()(
     (set, get) => ({
       downloads: {},
       sections: {},
+      sectionDownloads: {},
 
       getDownloadState: (routeId: string): DownloadState => {
         return get().downloads[routeId] ?? defaultState;
+      },
+
+      getSectionDownloadState: (sectionId: string): DownloadState => {
+        return get().sectionDownloads[sectionId] ?? defaultState;
       },
 
       startDownload: async (route: Route, mapStyle: MapStyle) => {
@@ -111,6 +124,11 @@ export const useDownloadStore = create<DownloadStore>()(
 
           if (controller.signal.aborted) return;
 
+          logError(
+            "download-store",
+            `route ${route.id} failed: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`,
+          );
+
           set((state) => ({
             downloads: {
               ...state.downloads,
@@ -155,13 +173,8 @@ export const useDownloadStore = create<DownloadStore>()(
       removeDownload: (routeId: string) => {
         deleteRouteData(routeId);
         set((state) => {
-          const { [routeId]: _, ...remainingDownloads } = state.downloads;
-          const remainingSections = Object.fromEntries(
-            Object.entries(state.sections).filter(
-              ([, entry]) => entry.routeId !== routeId,
-            ),
-          );
-          return { downloads: remainingDownloads, sections: remainingSections };
+          const { [routeId]: _removed, ...remainingDownloads } = state.downloads;
+          return { downloads: remainingDownloads };
         });
       },
 
@@ -172,7 +185,7 @@ export const useDownloadStore = create<DownloadStore>()(
         const exists = isRouteDownloaded(routeId);
         if (!exists) {
           set((state) => {
-            const { [routeId]: _, ...remaining } = state.downloads;
+            const { [routeId]: _removed, ...remaining } = state.downloads;
             return { downloads: remaining };
           });
         }
@@ -186,15 +199,19 @@ export const useDownloadStore = create<DownloadStore>()(
         mapStyle: MapStyle,
       ) => {
         const sectionId = buildSectionId(route.id, fromKm, toKm);
+        const controller = new AbortController();
+        activeSectionCancellers.set(sectionId, controller);
 
-        // Download route data if not already on disk
-        const downloadState = get().downloads[route.id];
-        if (downloadState?.status !== "complete") {
-          await get().startDownload(route, mapStyle);
-        }
-
-        // Add section entry
         set((state) => ({
+          sectionDownloads: {
+            ...state.sectionDownloads,
+            [sectionId]: {
+              status: "downloading",
+              progress: 0,
+              mapStyle,
+              routeName: route.path_name,
+            },
+          },
           sections: {
             ...state.sections,
             [sectionId]: {
@@ -204,82 +221,177 @@ export const useDownloadStore = create<DownloadStore>()(
               fromKm,
               toKm,
               savedAt: new Date().toISOString(),
+              mapStyle,
+              routeName: route.path_name,
             },
           },
         }));
+
+        void requestNotificationPermission();
+
+        try {
+          const result = await downloadSectionData(
+            route,
+            sectionId,
+            fromKm,
+            toKm,
+            mapStyle,
+            (progress) => {
+              if (controller.signal.aborted) return;
+              set((state) => ({
+                sectionDownloads: {
+                  ...state.sectionDownloads,
+                  [sectionId]: {
+                    status: "downloading",
+                    progress,
+                    mapStyle,
+                    routeName: route.path_name,
+                  },
+                },
+              }));
+              void updateDownloadNotification(sectionId, route.path_name, progress);
+            },
+            controller.signal,
+          );
+
+          activeSectionCancellers.delete(sectionId);
+          if (controller.signal.aborted) return;
+
+          set((state) => ({
+            sectionDownloads: {
+              ...state.sectionDownloads,
+              [sectionId]: {
+                status: "complete",
+                progress: 1,
+                mapStyle,
+                routeName: route.path_name,
+              },
+            },
+            sections: {
+              ...state.sections,
+              [sectionId]: {
+                sectionId,
+                routeId: route.id,
+                slug: route.slug,
+                fromKm,
+                toKm,
+                savedAt: new Date().toISOString(),
+                bbox: result.bbox,
+                mapStyle,
+                routeName: route.path_name,
+              },
+            },
+          }));
+
+          void showDownloadCompleteNotification(sectionId, route.path_name);
+        } catch (error) {
+          activeSectionCancellers.delete(sectionId);
+          if (controller.signal.aborted) return;
+
+          logError(
+            "download-store",
+            `section ${sectionId} failed: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`,
+          );
+
+          set((state) => ({
+            sectionDownloads: {
+              ...state.sectionDownloads,
+              [sectionId]: {
+                status: "error",
+                progress: 0,
+                mapStyle,
+                routeName: route.path_name,
+                error: error instanceof Error ? error.message : "Download failed",
+              },
+            },
+          }));
+
+          void dismissDownloadNotification(sectionId);
+        }
+      },
+
+      cancelSectionDownload: (sectionId: string) => {
+        const controller = activeSectionCancellers.get(sectionId);
+        if (controller) {
+          controller.abort();
+          activeSectionCancellers.delete(sectionId);
+        }
+        void dismissDownloadNotification(sectionId);
+        const section = get().sections[sectionId];
+        if (section) {
+          try {
+            deleteSectionData(section.routeId, sectionId);
+          } catch {
+            // best-effort
+          }
+        }
+        set((state) => {
+          const { [sectionId]: _dropped, ...restDownloads } = state.sectionDownloads;
+          const { [sectionId]: _sec, ...restSections } = state.sections;
+          return { sectionDownloads: restDownloads, sections: restSections };
+        });
       },
 
       removeSection: (sectionId: string) => {
         const section = get().sections[sectionId];
-        if (!section) return;
+        if (!section) {
+          // still clean download state if any
+          set((state) => {
+            const { [sectionId]: _d, ...rest } = state.sectionDownloads;
+            return { sectionDownloads: rest };
+          });
+          return;
+        }
 
-        const { routeId } = section;
+        deleteSectionData(section.routeId, sectionId);
 
         set((state) => {
-          const { [sectionId]: _, ...remainingSections } = state.sections;
-          return { sections: remainingSections };
+          const { [sectionId]: _sec, ...remainingSections } = state.sections;
+          const { [sectionId]: _dl, ...remainingSectionDownloads } =
+            state.sectionDownloads;
+          return {
+            sections: remainingSections,
+            sectionDownloads: remainingSectionDownloads,
+          };
         });
-
-        // Clean up route data if no other sections or full downloads reference it
-        const hasOtherSections = Object.values(get().sections).some(
-          (entry) => entry.routeId === routeId,
-        );
-        const hasFullDownload = get().downloads[routeId]?.status === "complete";
-
-        if (!hasOtherSections && !hasFullDownload) {
-          deleteRouteData(routeId);
-          set((state) => {
-            const { [routeId]: _, ...remainingDownloads } = state.downloads;
-            return { downloads: remainingDownloads };
-          });
-        }
       },
 
       isSectionSaved: (routeId: string, fromKm: number, toKm: number): boolean => {
         const sectionId = buildSectionId(routeId, fromKm, toKm);
-        return sectionId in get().sections;
+        if (!(sectionId in get().sections)) return false;
+        const dl = get().sectionDownloads[sectionId];
+        if (dl?.status === "downloading") return true;
+        return isSectionDownloaded(routeId, sectionId);
       },
     }),
     {
       name: "download-store",
-      version: 3,
+      version: 4,
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
         downloads: state.downloads,
         sections: state.sections,
+        sectionDownloads: state.sectionDownloads,
       }),
       migrate: (persistedState, version) => {
-        const state = (persistedState ?? {}) as {
-          downloads?: Record<string, DownloadState & { mapStyle?: string }>;
-          sections?: Record<string, SectionEntry>;
-        };
-        if (version >= 3) {
+        // v4: section downloads are independent from full route downloads;
+        // on-disk layout changed. Wipe to force re-download (app not released).
+        if (version < 4) {
           return {
-            downloads: state.downloads ?? {},
-            sections: state.sections ?? {},
+            downloads: {},
+            sections: {},
+            sectionDownloads: {},
           };
         }
-        // v1/v2 → v3: tile storage changed to hybrid base+grid layout.
-        // Force re-download of every route; styles must be rebuilt.
-        const migratedDownloads: Record<string, DownloadState> = {};
-        for (const [routeId, entry] of Object.entries(state.downloads ?? {})) {
-          const legacyStyle: string | undefined = entry.mapStyle;
-          let mappedStyle: MapStyle | undefined;
-          if (legacyStyle === "liberty" || legacyStyle === "light") {
-            mappedStyle = "light";
-          } else if (legacyStyle === "bright" || legacyStyle === "dark") {
-            mappedStyle = "dark";
-          }
-          migratedDownloads[routeId] = {
-            status: "idle",
-            progress: 0,
-            mapStyle: mappedStyle,
-            routeName: entry.routeName,
-          };
-        }
+        const state = (persistedState ?? {}) as {
+          downloads?: Record<string, DownloadState>;
+          sections?: Record<string, SectionEntry>;
+          sectionDownloads?: Record<string, DownloadState>;
+        };
         return {
-          downloads: migratedDownloads,
+          downloads: state.downloads ?? {},
           sections: state.sections ?? {},
+          sectionDownloads: state.sectionDownloads ?? {},
         };
       },
     },
