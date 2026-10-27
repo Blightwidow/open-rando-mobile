@@ -123,12 +123,27 @@ function GpsLayers() {
   );
 }
 
+const CENTER_ANIMATION_MILLISECONDS = 500;
+let neutralizeStopTimer: ReturnType<typeof setTimeout> | null = null;
+
+/**
+ * The native camera keeps its last stop and re-applies it whenever its view is updated, for
+ * instance on any re-render (the scale bar re-renders after every pan). Left as is, the map
+ * would snap back to the centering position each time the user pans. Once the move is over,
+ * replace the stored stop with one that has no target, which leaves the camera where it is.
+ */
 function centerOnPosition(cameraRef: CameraRefObject, position: GpsPosition): void {
   cameraRef.current?.setCamera({
     centerCoordinate: [position.longitude, position.latitude],
     zoomLevel: 14,
-    animationDuration: 500,
+    animationDuration: CENTER_ANIMATION_MILLISECONDS,
   });
+
+  if (neutralizeStopTimer) clearTimeout(neutralizeStopTimer);
+  neutralizeStopTimer = setTimeout(() => {
+    neutralizeStopTimer = null;
+    cameraRef.current?.setCamera({ animationDuration: 0 });
+  }, CENTER_ANIMATION_MILLISECONDS + 200);
 }
 
 /**
