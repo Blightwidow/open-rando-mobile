@@ -1,5 +1,12 @@
 import { useMemo, useEffect, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type TextStyle,
+  type ViewStyle,
+} from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
 import { useGpsStore } from "@/stores/gps-store";
@@ -12,6 +19,23 @@ import { useColors } from "@/hooks/use-colors";
 import { t } from "@/lib/i18n";
 import { useLocale } from "@/hooks/use-locale";
 
+// Own subscription: the screen (and the map under it) must not re-render per GPS update
+function SearchingBanner({
+  bannerStyle,
+  textStyle,
+}: {
+  bannerStyle: ViewStyle;
+  textStyle: TextStyle;
+}) {
+  const position = useGpsStore((state) => state.position);
+  if (position) return null;
+  return (
+    <View style={bannerStyle}>
+      <Text style={textStyle}>{t("gps.searching")}</Text>
+    </View>
+  );
+}
+
 export default function FollowRouteScreen() {
   useLocale();
   useActiveHike();
@@ -19,7 +43,6 @@ export default function FollowRouteScreen() {
 
   const router = useRouter();
   const isTracking = useGpsStore((state) => state.isTracking);
-  const position = useGpsStore((state) => state.position);
   const activeRouteSlug = useGpsStore((state) => state.activeRouteSlug);
   const stopFollowing = useGpsStore((state) => state.stopFollowing);
 
@@ -97,7 +120,6 @@ export default function FollowRouteScreen() {
         geoJson={geoJson}
         bbox={route.bbox}
         pois={pois}
-        userPosition={position}
         followUserLocation={true}
         mapStyle={downloadMapStyle}
         routeId={route.id}
@@ -106,11 +128,10 @@ export default function FollowRouteScreen() {
         onPoiPanelHeightChange={setPoiPanelHeight}
       />
 
-      {!position && (
-        <View style={styles.searchingBanner}>
-          <Text style={styles.searchingText}>{t("gps.searching")}</Text>
-        </View>
-      )}
+      <SearchingBanner
+        bannerStyle={styles.searchingBanner}
+        textStyle={styles.searchingText}
+      />
 
       <Pressable
         style={[styles.stopButton, { bottom: 16 + poiPanelHeight }]}
