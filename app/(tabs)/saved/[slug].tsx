@@ -33,7 +33,7 @@ export default function OfflineRouteDetailScreen() {
     section?: string;
   }>();
   const sectionId = typeof sectionParam === "string" ? sectionParam : undefined;
-  const { route, geoJson, elevation, isLoading, error } = useOfflineRoute(
+  const { route, geoJson, elevation, pois, isLoading, error } = useOfflineRoute(
     slug,
     sectionId,
   );
@@ -265,7 +265,7 @@ export default function OfflineRouteDetailScreen() {
           <TrailMap
             geoJson={geoJson}
             bbox={section?.bbox ?? route.bbox}
-            pois={route.pois}
+            pois={pois}
             mapStyle={downloadMapStyle}
             routeId={route.id}
           />

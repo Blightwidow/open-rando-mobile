@@ -1,7 +1,13 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import type { DownloadState, ElevationProfile, Route, SectionEntry } from "@/lib/types";
+import type {
+  DownloadState,
+  ElevationProfile,
+  PointOfInterest,
+  Route,
+  SectionEntry,
+} from "@/lib/types";
 import type { MapStyle } from "@/lib/constants";
 import { buildSectionId } from "@/lib/qr-utils";
 import {
@@ -26,6 +32,7 @@ import { isImportedRouteId, useImportedRouteStore } from "@/stores/imported-rout
 export interface ImportedTrack {
   geoJson: GeoJSON.FeatureCollection;
   elevation: ElevationProfile;
+  pois: PointOfInterest[];
   bbox: Bbox;
 }
 
@@ -262,6 +269,7 @@ export const useDownloadStore = create<DownloadStore>()(
                 sectionId,
                 importedTrack.geoJson,
                 importedTrack.elevation,
+                importedTrack.pois,
                 importedTrack.bbox,
                 mapStyle,
                 handleProgress,

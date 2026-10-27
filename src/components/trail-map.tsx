@@ -20,7 +20,8 @@ interface SelectedPoi {
   poiType: string;
   url: string;
   hasDirectUrl: boolean;
-  distanceKm: number;
+  /** Position along the trail; train stations only. */
+  distanceKm: number | null;
 }
 
 function buildPoiUrl(poi: PointOfInterest): { url: string; hasDirectUrl: boolean } {
@@ -322,7 +323,7 @@ export function TrailMap({
       poiType: String(props.poiType ?? ""),
       url: String(props.url ?? ""),
       hasDirectUrl: Boolean(props.hasDirectUrl),
-      distanceKm: Number(props.distanceKm ?? 0),
+      distanceKm: typeof props.distanceKm === "number" ? props.distanceKm : null,
     });
   };
 
@@ -471,8 +472,9 @@ export function TrailMap({
             <View style={styles.poiPanelInfo}>
               <Text style={styles.poiPanelName}>{selectedPoi.name}</Text>
               <Text style={styles.poiPanelType}>
-                {t(`poi.${selectedPoi.poiType}`)} ·{" "}
-                {formatDistance(selectedPoi.distanceKm)} {t("poi.distanceFromStart")}
+                {t(`poi.${selectedPoi.poiType}`)}
+                {selectedPoi.distanceKm !== null &&
+                  ` · ${formatDistance(selectedPoi.distanceKm)} ${t("poi.distanceFromStart")}`}
               </Text>
             </View>
             <Pressable

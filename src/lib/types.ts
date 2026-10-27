@@ -2,13 +2,88 @@ import type { MapStyle } from "@/lib/constants";
 
 export type PoiType = "train_station" | "bus_stop" | "camping" | "hotel";
 
+export interface ServiceWindow {
+  first_departure_minutes: number;
+  last_departure_minutes: number;
+  departure_count: number;
+  sample_date?: string | null;
+}
+
+export interface RailService {
+  weekday: ServiceWindow | null;
+  saturday: ServiceWindow | null;
+  sunday: ServiceWindow | null;
+}
+
+/** A POI as stored in the grid (pois/<col>_<row>.json), independent of any track. */
+export interface PoiRecord {
+  id: string;
+  kind: PoiType;
+  name: string;
+  lat: number;
+  lon: number;
+  url?: string | null;
+  transit_lines?: string[];
+  rail_service?: RailService | null;
+}
+
+/** How a POI relates to one track (links/<routeId>.json). */
+export interface PoiLink {
+  poi_id: string;
+  kind: PoiType;
+  distance_to_trail_m: number;
+  /** Position along the trail from its start. Train stations only. */
+  distance_km: number | null;
+  /** [lon, lat] where the walk from the POI meets the trail. */
+  junction: [number, number] | null;
+}
+
+export interface PoiCounts {
+  train_station: number;
+  bus_stop: number;
+  hotel: number;
+  camping: number;
+  train_station_with_rail_service: number;
+}
+
+export interface LinksFile {
+  route_id: string;
+  counts: PoiCounts;
+  links: PoiLink[];
+}
+
+export interface PoiGridDefinition {
+  /** [lonMin, latMin, lonMax, latMax] */
+  bbox: [number, number, number, number];
+  cols: number;
+  rows: number;
+}
+
+export interface PoiIndex {
+  generated_at: string;
+  grid: PoiGridDefinition;
+  squares: { col: number; row: number; count: number }[];
+}
+
+export interface PoiSquareFile {
+  square: { col: number; row: number };
+  pois: PoiRecord[];
+}
+
+/** A POI of one track: the grid record joined with its link. */
 export interface PointOfInterest {
+  id: string;
   name: string;
   lat: number;
   lon: number;
   poi_type: PoiType;
-  url: string;
-  distance_km: number;
+  url?: string;
+  transit_lines?: string[];
+  /** Position along the trail (train stations only). */
+  distance_km?: number;
+  distance_to_trail_m: number;
+  junction?: [number, number];
+  rail_service?: RailService | null;
 }
 
 export type Difficulty = "easy" | "moderate" | "difficult" | "very_difficult";
@@ -21,7 +96,8 @@ export interface Route {
   path_name: string;
   description: string;
   osm_relation_id: number;
-  pois: PointOfInterest[];
+  poi_counts: PoiCounts;
+  elevation_path: string;
   distance_km: number;
   elevation_gain_m: number;
   elevation_loss_m: number;

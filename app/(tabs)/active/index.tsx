@@ -29,7 +29,7 @@ export default function FollowRouteScreen() {
     if (activeSectionId) return state.sections[activeSectionId]?.mapStyle;
     return activeRouteId ? state.getDownloadState(activeRouteId).mapStyle : undefined;
   });
-  const { route, geoJson } = useOfflineRoute(
+  const { route, geoJson, pois } = useOfflineRoute(
     activeRouteSlug ?? "",
     activeSectionId ?? undefined,
   );
@@ -96,7 +96,7 @@ export default function FollowRouteScreen() {
       <TrailMap
         geoJson={geoJson}
         bbox={route.bbox}
-        pois={route.pois}
+        pois={pois}
         userPosition={position}
         followUserLocation={true}
         mapStyle={downloadMapStyle}

@@ -12,6 +12,8 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { GpxParseError } from "@/lib/gpx";
 import type { MapStyle } from "@/lib/constants";
 import { readGpxRoute } from "@/services/gpx-import";
+import { buildTrackPois } from "@/services/poi-data";
+import { countPois } from "@/lib/route-pois";
 import { useDownloadStore } from "@/stores/download-store";
 import { useImportedRouteStore } from "@/stores/imported-route-store";
 import { buildSectionId } from "@/lib/qr-utils";
@@ -75,8 +77,13 @@ export default function ImportGpxScreen() {
 
     void (async () => {
       try {
-        const { route, geoJson, elevation, bbox } = await readGpxRoute(uri);
-        const sectionId = buildSectionId(route.id, 0, route.distance_km);
+        const imported = await readGpxRoute(uri);
+        const { geoJson, elevation, bbox } = imported;
+        const sectionId = buildSectionId(
+          imported.route.id,
+          0,
+          imported.route.distance_km,
+        );
 
         if (useDownloadStore.getState().sections[sectionId]) {
           Toast.show({
@@ -88,11 +95,26 @@ export default function ImportGpxScreen() {
           return;
         }
 
+        // Link stations, stops and lodging around the track. Needs the network, like the
+        // tile download that follows: fail the import rather than save a track without them.
+        const coordinates = (geoJson.features[0].geometry as GeoJSON.LineString)
+          .coordinates as [number, number][];
+        let pois;
+        try {
+          pois = await buildTrackPois(coordinates, bbox);
+        } catch (error) {
+          logError("gpx-import", `POI linking failed: ${String(error)}`);
+          setErrorMessage(t("gpx.poiFailed"));
+          return;
+        }
+        const route = { ...imported.route, poi_counts: countPois(pois) };
+
         const startImport = (mapStyle: MapStyle) => {
           addImportedRoute(route);
           void startSectionDownload(route, 0, route.distance_km, mapStyle, {
             geoJson,
             elevation,
+            pois,
             bbox,
           }).catch(() => {
             Toast.show({
