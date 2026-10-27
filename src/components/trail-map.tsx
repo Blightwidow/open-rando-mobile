@@ -99,6 +99,7 @@ export function TrailMap({
   const insets = useSafeAreaInsets();
   const cameraRef = useRef<MapLibreGL.CameraRef>(null);
   const hasCenteredRef = useRef(false);
+  const hasUserPannedRef = useRef(false);
   const [selectedPoi, setSelectedPoi] = useState<SelectedPoi | null>(null);
   const [scaleInfo, setScaleInfo] = useState<ScaleInfo | null>(null);
 
@@ -239,7 +240,8 @@ export function TrailMap({
     [bbox],
   );
 
-  // Center on user once when followUserLocation first becomes active
+  // Center on user once at the first GPS fix; never again, and not if the user already
+  // panned the map. The recenter button is the only way back afterwards.
   useEffect(() => {
     if (
       followUserLocation &&
@@ -248,6 +250,7 @@ export function TrailMap({
       !hasCenteredRef.current
     ) {
       hasCenteredRef.current = true;
+      if (hasUserPannedRef.current) return;
       cameraRef.current.setCamera({
         centerCoordinate: [userPosition.longitude, userPosition.latitude],
         zoomLevel: 14,
@@ -258,6 +261,7 @@ export function TrailMap({
 
   const handleRegionDidChange = useCallback(
     (feature: GeoJSON.Feature<GeoJSON.Point, RegionPayload>) => {
+      if (feature.properties.isUserInteraction) hasUserPannedRef.current = true;
       if (!showScaleBar) return;
       const zoom = feature.properties.zoomLevel;
       const latitude = feature.geometry.coordinates[1];
