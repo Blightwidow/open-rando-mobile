@@ -38,4 +38,35 @@ describe("gps-store", () => {
     const state = useGpsStore.getState();
     expect(state.position).toEqual({ latitude: 48.0, longitude: 2.025, accuracy: 10 });
   });
+
+  it("starts with the camera unsettled", () => {
+    expect(useGpsStore.getState().isCameraSettled).toBe(false);
+  });
+
+  it("settleCamera marks the first fix as handled", () => {
+    useGpsStore.getState().startFollowing("route-1", "route-slug");
+    useGpsStore.getState().settleCamera();
+    expect(useGpsStore.getState().isCameraSettled).toBe(true);
+  });
+
+  it("keeps the camera settled across position updates", () => {
+    useGpsStore.getState().startFollowing("route-1", "route-slug");
+    useGpsStore.getState().settleCamera();
+    useGpsStore.getState().updatePosition(48.0, 2.025, 10);
+    expect(useGpsStore.getState().isCameraSettled).toBe(true);
+  });
+
+  it("starting a new hike unsettles the camera again", () => {
+    useGpsStore.getState().startFollowing("route-1", "route-slug");
+    useGpsStore.getState().settleCamera();
+    useGpsStore.getState().startFollowing("route-2", "other-slug");
+    expect(useGpsStore.getState().isCameraSettled).toBe(false);
+  });
+
+  it("stopFollowing unsettles the camera", () => {
+    useGpsStore.getState().startFollowing("route-1", "route-slug");
+    useGpsStore.getState().settleCamera();
+    useGpsStore.getState().stopFollowing();
+    expect(useGpsStore.getState().isCameraSettled).toBe(false);
+  });
 });

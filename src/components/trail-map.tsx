@@ -11,8 +11,9 @@ import { useColors } from "@/hooks/use-colors";
 import { useOfflineMapStyle } from "@/hooks/use-offline-map-style";
 import { useWorldAssetUri } from "@/hooks/use-world-asset";
 import { t } from "@/lib/i18n";
+import { logInfo } from "@/lib/logger";
 import { formatDistance } from "@/lib/format";
-import type { GpsPosition } from "@/stores/gps-store";
+import { useGpsStore, type GpsPosition } from "@/stores/gps-store";
 import type { PointOfInterest } from "@/lib/types";
 
 interface SelectedPoi {
@@ -99,8 +100,6 @@ export function TrailMap({
   const themeColors = useColors();
   const insets = useSafeAreaInsets();
   const cameraRef = useRef<MapLibreGL.CameraRef>(null);
-  const hasCenteredRef = useRef(false);
-  const hasUserPannedRef = useRef(false);
   const [selectedPoi, setSelectedPoi] = useState<SelectedPoi | null>(null);
   const [scaleInfo, setScaleInfo] = useState<ScaleInfo | null>(null);
 
@@ -241,34 +240,38 @@ export function TrailMap({
     [bbox],
   );
 
-  // Center on user once at the first GPS fix; never again, and not if the user already
-  // panned the map. The recenter button is the only way back afterwards.
   useEffect(() => {
-    if (
-      followUserLocation &&
-      userPosition &&
-      cameraRef.current &&
-      !hasCenteredRef.current
-    ) {
-      hasCenteredRef.current = true;
-      if (hasUserPannedRef.current) return;
-      cameraRef.current.setCamera({
-        centerCoordinate: [userPosition.longitude, userPosition.latitude],
-        zoomLevel: 14,
-        animationDuration: 500,
-      });
-    }
+    logInfo("trail-map", `mounted (followUserLocation=${String(followUserLocation)})`);
+    return () => logInfo("trail-map", "unmounted");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Center on user once per hike, at the first GPS fix; never again, and not if the user
+  // already panned the map. The recenter button is the only way back afterwards.
+  useEffect(() => {
+    if (!followUserLocation || !userPosition || !cameraRef.current) return;
+    const { isCameraSettled, settleCamera } = useGpsStore.getState();
+    if (isCameraSettled) return;
+    settleCamera();
+    logInfo("trail-map", "first GPS fix: centering once");
+    cameraRef.current.setCamera({
+      centerCoordinate: [userPosition.longitude, userPosition.latitude],
+      zoomLevel: 14,
+      animationDuration: 500,
+    });
   }, [followUserLocation, userPosition]);
 
   const handleRegionDidChange = useCallback(
     (feature: GeoJSON.Feature<GeoJSON.Point, RegionPayload>) => {
-      if (feature.properties.isUserInteraction) hasUserPannedRef.current = true;
+      if (followUserLocation && feature.properties.isUserInteraction) {
+        useGpsStore.getState().settleCamera();
+      }
       if (!showScaleBar) return;
       const zoom = feature.properties.zoomLevel;
       const latitude = feature.geometry.coordinates[1];
       setScaleInfo(computeScale(zoom, latitude));
     },
-    [showScaleBar],
+    [showScaleBar, followUserLocation],
   );
 
   const poisGeoJson = useMemo(() => {
@@ -329,6 +332,7 @@ export function TrailMap({
 
   const handleRecenter = () => {
     if (userPosition && cameraRef.current) {
+      logInfo("trail-map", "recenter button pressed");
       cameraRef.current.setCamera({
         centerCoordinate: [userPosition.longitude, userPosition.latitude],
         zoomLevel: 14,
