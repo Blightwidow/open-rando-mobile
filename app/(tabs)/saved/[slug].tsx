@@ -12,6 +12,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useOfflineRoute } from "@/hooks/use-offline-route";
 import { useDownloadStore } from "@/stores/download-store";
+import { isImportedRouteId } from "@/stores/imported-route-store";
 import { useLocationPermission } from "@/hooks/use-location-permission";
 import { useGpsStore } from "@/stores/gps-store";
 import { TrailMap } from "@/components/trail-map";
@@ -210,7 +211,9 @@ export default function OfflineRouteDetailScreen() {
         <View style={styles.pathBadge}>
           <Text style={styles.pathBadgeText}>{route.path_ref}</Text>
         </View>
-        <DifficultyBadge difficulty={route.difficulty} />
+        {!isImportedRouteId(route.id) && (
+          <DifficultyBadge difficulty={route.difficulty} />
+        )}
         <Pressable style={styles.downloadedLabel} onPress={handleDelete} hitSlop={8}>
           <Text style={styles.downloadedLabelText}>{t("download.complete")}</Text>
           <Ionicons name="trash-outline" size={14} color={colors.error} />
@@ -248,7 +251,7 @@ export default function OfflineRouteDetailScreen() {
               Alert.alert(t("gps.permissionRequired"), t("gps.permissionDenied"));
               return;
             }
-            startFollowing(route.id, route.slug);
+            startFollowing(route.id, route.slug, sectionId);
             router.push("/active");
           }}
         >

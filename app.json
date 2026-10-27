@@ -19,7 +19,27 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "TrainRando uses your location to show your position on the trail map during a hike.",
         "NSCameraUsageDescription": "TrainRando uses the camera to scan QR codes for hiking route sections.",
-        "NSUserNotificationsUsageDescription": "TrainRando shows download progress in the notification center when downloading offline maps."
+        "NSUserNotificationsUsageDescription": "TrainRando shows download progress in the notification center when downloading offline maps.",
+        "CFBundleDocumentTypes": [
+          {
+            "CFBundleTypeName": "GPX",
+            "CFBundleTypeRole": "Viewer",
+            "LSHandlerRank": "Alternate",
+            "LSItemContentTypes": ["com.topografix.gpx", "public.xml"]
+          }
+        ],
+        "UTImportedTypeDeclarations": [
+          {
+            "UTTypeIdentifier": "com.topografix.gpx",
+            "UTTypeDescription": "GPS Exchange Format",
+            "UTTypeConformsTo": ["public.xml"],
+            "UTTypeTagSpecification": {
+              "public.filename-extension": ["gpx"],
+              "public.mime-type": ["application/gpx+xml"]
+            }
+          }
+        ],
+        "LSSupportsOpeningDocumentsInPlace": false
       }
     },
     "android": {
@@ -28,7 +48,35 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "fr.dammaretz.trainrando"
+      "package": "fr.dammaretz.trainrando",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "category": ["DEFAULT", "BROWSABLE"],
+          "data": [
+            {
+              "scheme": "content",
+              "mimeType": "application/gpx+xml"
+            },
+            {
+              "scheme": "content",
+              "mimeType": "application/octet-stream"
+            },
+            {
+              "scheme": "file",
+              "mimeType": "application/gpx+xml"
+            },
+            {
+              "scheme": "content",
+              "mimeType": "text/xml"
+            },
+            {
+              "scheme": "content",
+              "mimeType": "application/xml"
+            }
+          ]
+        }
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png",

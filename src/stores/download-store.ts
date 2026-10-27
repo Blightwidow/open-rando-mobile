@@ -1,12 +1,13 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import type { DownloadState, Route, SectionEntry } from "@/lib/types";
+import type { DownloadState, ElevationProfile, Route, SectionEntry } from "@/lib/types";
 import type { MapStyle } from "@/lib/constants";
 import { buildSectionId } from "@/lib/qr-utils";
 import {
   downloadRouteData,
   downloadSectionData,
+  saveImportedSectionData,
   deleteRouteData,
   deleteSectionData,
   isRouteDownloaded,
@@ -19,6 +20,14 @@ import {
   dismissDownloadNotification,
 } from "@/lib/download-notifications";
 import { logError } from "@/lib/logger";
+import type { Bbox } from "@/lib/geometry";
+import { isImportedRouteId, useImportedRouteStore } from "@/stores/imported-route-store";
+
+export interface ImportedTrack {
+  geoJson: GeoJSON.FeatureCollection;
+  elevation: ElevationProfile;
+  bbox: Bbox;
+}
 
 // Module-level maps: not persisted, reset on app restart
 const activeCancellers = new Map<string, AbortController>();
@@ -38,6 +47,7 @@ interface DownloadStore {
     fromKm: number,
     toKm: number,
     mapStyle: MapStyle,
+    importedTrack?: ImportedTrack,
   ) => Promise<void>;
   cancelSectionDownload: (sectionId: string) => void;
   removeSection: (sectionId: string) => void;
@@ -197,6 +207,7 @@ export const useDownloadStore = create<DownloadStore>()(
         fromKm: number,
         toKm: number,
         mapStyle: MapStyle,
+        importedTrack?: ImportedTrack,
       ) => {
         const sectionId = buildSectionId(route.id, fromKm, toKm);
         const controller = new AbortController();
@@ -230,29 +241,41 @@ export const useDownloadStore = create<DownloadStore>()(
         void requestNotificationPermission();
 
         try {
-          const result = await downloadSectionData(
-            route,
-            sectionId,
-            fromKm,
-            toKm,
-            mapStyle,
-            (progress) => {
-              if (controller.signal.aborted) return;
-              set((state) => ({
-                sectionDownloads: {
-                  ...state.sectionDownloads,
-                  [sectionId]: {
-                    status: "downloading",
-                    progress,
-                    mapStyle,
-                    routeName: route.path_name,
-                  },
+          const handleProgress = (progress: number) => {
+            if (controller.signal.aborted) return;
+            set((state) => ({
+              sectionDownloads: {
+                ...state.sectionDownloads,
+                [sectionId]: {
+                  status: "downloading",
+                  progress,
+                  mapStyle,
+                  routeName: route.path_name,
                 },
-              }));
-              void updateDownloadNotification(sectionId, route.path_name, progress);
-            },
-            controller.signal,
-          );
+              },
+            }));
+            void updateDownloadNotification(sectionId, route.path_name, progress);
+          };
+          const result = importedTrack
+            ? await saveImportedSectionData(
+                route.id,
+                sectionId,
+                importedTrack.geoJson,
+                importedTrack.elevation,
+                importedTrack.bbox,
+                mapStyle,
+                handleProgress,
+                controller.signal,
+              )
+            : await downloadSectionData(
+                route,
+                sectionId,
+                fromKm,
+                toKm,
+                mapStyle,
+                handleProgress,
+                controller.signal,
+              );
 
           activeSectionCancellers.delete(sectionId);
           if (controller.signal.aborted) return;
@@ -325,6 +348,9 @@ export const useDownloadStore = create<DownloadStore>()(
             // best-effort
           }
         }
+        if (section && isImportedRouteId(section.routeId)) {
+          useImportedRouteStore.getState().removeRoute(section.routeId);
+        }
         set((state) => {
           const { [sectionId]: _dropped, ...restDownloads } = state.sectionDownloads;
           const { [sectionId]: _sec, ...restSections } = state.sections;
@@ -344,6 +370,9 @@ export const useDownloadStore = create<DownloadStore>()(
         }
 
         deleteSectionData(section.routeId, sectionId);
+        if (isImportedRouteId(section.routeId)) {
+          useImportedRouteStore.getState().removeRoute(section.routeId);
+        }
 
         set((state) => {
           const { [sectionId]: _sec, ...remainingSections } = state.sections;

@@ -184,6 +184,49 @@ export async function downloadSectionData(
   return { bbox: sliced.bbox };
 }
 
+export async function saveImportedSectionData(
+  routeId: string,
+  sectionId: string,
+  geoJson: GeoJSON.FeatureCollection,
+  elevation: ElevationProfile,
+  bbox: [number, number, number, number],
+  mapStyle: MapStyle,
+  onProgress?: (progress: number) => void,
+  signal?: AbortSignal,
+): Promise<{ bbox: [number, number, number, number] }> {
+  logInfo("offline-storage", `Saving imported GPX ${sectionId} style=${mapStyle}`);
+  const parentDir = routeDirectory(routeId);
+  if (!parentDir.exists) parentDir.create();
+  const sectionsDir = routeSectionsDirectory(routeId);
+  if (!sectionsDir.exists) sectionsDir.create();
+  const sectionDir = sectionDirectory(routeId, sectionId);
+  if (!sectionDir.exists) sectionDir.create();
+
+  const geoJsonTarget = sectionGeoJsonFile(routeId, sectionId);
+  const elevationTarget = sectionElevationFile(routeId, sectionId);
+  if (!geoJsonTarget.exists) geoJsonTarget.create();
+  geoJsonTarget.write(JSON.stringify(geoJson));
+  if (!elevationTarget.exists) elevationTarget.create();
+  elevationTarget.write(JSON.stringify(elevation));
+
+  onProgress?.(0.25);
+
+  await downloadSectionTiles(
+    routeId,
+    sectionId,
+    bbox,
+    mapStyle,
+    (tileFraction) => {
+      onProgress?.(0.25 + tileFraction * 0.75);
+    },
+    signal,
+  );
+
+  onProgress?.(1.0);
+  logInfo("offline-storage", `Imported GPX ${sectionId} complete`);
+  return { bbox };
+}
+
 export function getStorageUsedBytes(): number {
   ensureRoutesDirectory();
   let total = routesDirectory.size ?? 0;

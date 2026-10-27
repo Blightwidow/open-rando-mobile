@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getRouteBySlug } from "@/services/database";
+import { lookupRouteBySlug } from "@/services/route-lookup";
 import {
   readElevation,
   readGeoJson,
@@ -22,7 +22,7 @@ interface OfflineRouteData {
 export function useOfflineRoute(slug: string, sectionId?: string): OfflineRouteData {
   const routeQuery = useQuery({
     queryKey: ["route", slug],
-    queryFn: () => getRouteBySlug(slug),
+    queryFn: () => lookupRouteBySlug(slug),
     enabled: !!slug,
   });
 

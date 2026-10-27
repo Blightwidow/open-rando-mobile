@@ -150,6 +150,15 @@ const translations: Record<Locale, Record<string, string>> = {
     // Sections
     "saved.sectionLabel": "km {from} → km {to}",
 
+    // GPX import
+    "gpx.import": "Importer un fichier GPX",
+    "gpx.importing": "Import du fichier GPX…",
+    "gpx.importFailed": "Impossible de lire ce fichier GPX",
+    "gpx.invalidFile": "Ce fichier ne contient aucun tracé GPX valide.",
+    "gpx.alreadyImported": "Ce tracé est déjà importé",
+    "gpx.imported": "Tracé importé",
+    "gpx.close": "Fermer",
+
     // Developer
     "settings.developer": "Développeur",
     "settings.exportLog": "Exporter le journal de debug",
@@ -296,6 +305,15 @@ const translations: Record<Locale, Record<string, string>> = {
 
     // Sections
     "saved.sectionLabel": "km {from} → km {to}",
+
+    // GPX import
+    "gpx.import": "Import GPX file",
+    "gpx.importing": "Importing GPX file…",
+    "gpx.importFailed": "Could not read this GPX file",
+    "gpx.invalidFile": "This file does not contain a valid GPX track.",
+    "gpx.alreadyImported": "This track is already imported",
+    "gpx.imported": "Track imported",
+    "gpx.close": "Close",
 
     // Developer
     "settings.developer": "Developer",

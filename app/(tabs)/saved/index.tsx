@@ -1,10 +1,11 @@
-import { useMemo, useLayoutEffect } from "react";
+import { useCallback, useMemo, useLayoutEffect } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View, Alert } from "react-native";
 import { useRouter, useNavigation } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import * as DocumentPicker from "expo-document-picker";
 import { useDownloadStore } from "@/stores/download-store";
-import { getRouteById } from "@/services/database";
+import { lookupRouteById } from "@/services/route-lookup";
 import { formatDistance, formatElevation } from "@/lib/format";
 import { spacing, fontSize, borderRadius } from "@/lib/theme";
 import { useColors } from "@/hooks/use-colors";
@@ -26,18 +27,33 @@ export default function SavedScreen() {
   const removeDownload = useDownloadStore((state) => state.removeDownload);
   const removeSection = useDownloadStore((state) => state.removeSection);
 
+  const pickGpxFile = useCallback(async () => {
+    // GPX has no registered MIME type on many devices, so accept anything and validate on parse
+    const result = await DocumentPicker.getDocumentAsync({
+      type: "*/*",
+      copyToCacheDirectory: true,
+    });
+    if (result.canceled || result.assets.length === 0) return;
+    router.push(`/saved/import?uri=${encodeURIComponent(result.assets[0].uri)}`);
+  }, [router]);
+
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <Pressable
-          onPress={() => router.push("/saved/scan")}
-          style={{ padding: spacing.small }}
-        >
-          <Ionicons name="add" size={28} color={colors.primary} />
-        </Pressable>
+        <View style={{ flexDirection: "row" }}>
+          <Pressable onPress={pickGpxFile} style={{ padding: spacing.small }}>
+            <Ionicons name="document-outline" size={26} color={colors.primary} />
+          </Pressable>
+          <Pressable
+            onPress={() => router.push("/saved/scan")}
+            style={{ padding: spacing.small }}
+          >
+            <Ionicons name="add" size={28} color={colors.primary} />
+          </Pressable>
+        </View>
       ),
     });
-  }, [navigation, colors, router]);
+  }, [navigation, colors, router, pickGpxFile]);
 
   const styles = useMemo(
     () =>
@@ -145,7 +161,7 @@ export default function SavedScreen() {
     queryFn: async () => {
       const map: Record<string, Route> = {};
       for (const id of allRouteIds) {
-        const route = await getRouteById(id);
+        const route = await lookupRouteById(id);
         if (route) map[id] = route;
       }
       return map;
