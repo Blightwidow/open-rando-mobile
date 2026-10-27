@@ -60,19 +60,67 @@
             },
             {
               "scheme": "content",
+              "mimeType": "application/gpx"
+            },
+            {
+              "scheme": "content",
+              "mimeType": "application/x-gpx+xml"
+            },
+            {
+              "scheme": "content",
+              "mimeType": "application/x-gpx"
+            },
+            {
+              "scheme": "content",
               "mimeType": "application/octet-stream"
             },
             {
-              "scheme": "file",
-              "mimeType": "application/gpx+xml"
+              "scheme": "content",
+              "mimeType": "application/xml"
             },
             {
               "scheme": "content",
               "mimeType": "text/xml"
             },
             {
-              "scheme": "content",
+              "scheme": "file",
+              "mimeType": "application/gpx+xml"
+            },
+            {
+              "scheme": "file",
+              "mimeType": "application/gpx"
+            },
+            {
+              "scheme": "file",
+              "mimeType": "application/x-gpx+xml"
+            },
+            {
+              "scheme": "file",
+              "mimeType": "application/x-gpx"
+            },
+            {
+              "scheme": "file",
+              "mimeType": "application/octet-stream"
+            },
+            {
+              "scheme": "file",
               "mimeType": "application/xml"
+            },
+            {
+              "scheme": "file",
+              "mimeType": "text/xml"
+            }
+          ]
+        },
+        {
+          "action": "VIEW",
+          "category": ["DEFAULT", "BROWSABLE"],
+          "data": [
+            {
+              "scheme": "content",
+              "host": "*",
+              "pathPattern": ".*\\\\.gpx",
+              "mimeType": "*/*"
             }
           ]
         }

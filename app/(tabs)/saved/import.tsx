@@ -15,7 +15,7 @@ import { readGpxRoute } from "@/services/gpx-import";
 import { useDownloadStore } from "@/stores/download-store";
 import { useImportedRouteStore } from "@/stores/imported-route-store";
 import { buildSectionId } from "@/lib/qr-utils";
-import { logError } from "@/lib/logger";
+import { logError, logInfo } from "@/lib/logger";
 import { spacing, fontSize, borderRadius } from "@/lib/theme";
 import { useColors } from "@/hooks/use-colors";
 import { t } from "@/lib/i18n";
@@ -71,6 +71,7 @@ export default function ImportGpxScreen() {
   useEffect(() => {
     if (startedRef.current || typeof uri !== "string" || !uri) return;
     startedRef.current = true;
+    logInfo("gpx-import", `import screen opened with uri=${uri}`);
 
     void (async () => {
       try {
@@ -123,7 +124,10 @@ export default function ImportGpxScreen() {
           { cancelable: true, onDismiss: () => router.replace("/saved") },
         );
       } catch (error) {
-        logError("gpx-import", `import failed: ${String(error)}`);
+        logError(
+          "gpx-import",
+          `import failed: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}`,
+        );
         setErrorMessage(
           error instanceof GpxParseError ? t("gpx.invalidFile") : t("gpx.importFailed"),
         );
