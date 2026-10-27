@@ -66,6 +66,9 @@ jobs:
 
       - name: Build APK
         run: cd android && ./gradlew assembleRelease
+        env:
+          # Inlined into the JS bundle; shown in the debug log at startup
+          EXPO_PUBLIC_BUILD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

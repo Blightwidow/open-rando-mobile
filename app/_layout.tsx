@@ -14,6 +14,7 @@ import { ensureWorldAsset } from "@/services/world-asset";
 import { useSettingsStore } from "@/stores/settings-store";
 import { t } from "@/lib/i18n";
 import { logInfo } from "@/lib/logger";
+import { getBuildDescription } from "@/lib/build-info";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ function CatalogSyncProvider({ children }: { children: React.ReactNode }) {
   const { mutate: syncCatalog } = useCatalogSync();
 
   useEffect(() => {
+    logInfo("app", `Build: ${getBuildDescription()}`);
     logInfo("app", "Initializing: ensuring routes directory and starting catalog sync");
     ensureRoutesDirectory();
     try {

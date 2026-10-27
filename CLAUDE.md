@@ -93,8 +93,8 @@ app/
 src/
   components/            -- HikeCard, TrailMap, DownloadButton, DifficultyBadge, etc.
   hooks/                 -- use-catalog, use-download, use-offline-hike
-  lib/                   -- types, constants, format utilities, theme
-  services/              -- api, database (SQLite), catalog-sync, offline-storage, gpx-import, route-lookup
+  lib/                   -- types, constants, format utilities, theme, gpx, poi-grid, poi-linking, route-pois
+  services/              -- api, database (SQLite), catalog-sync, offline-storage, gpx-import, poi-data, route-lookup
   stores/                -- download-store, imported-route-store (Zustand, persisted)
 ```
 
@@ -103,7 +103,7 @@ src/
 1. **Launch**: `app/_layout.tsx` triggers catalog sync
 2. **Sync**: `catalog-sync.ts` fetches `catalog.json`, compares `generated_at` with SQLite metadata, upserts if newer
 3. **Browse**: `useHikes()` reads from SQLite via TanStack Query
-4. **Download**: `download-store` orchestrates fetching GeoJSON + elevation → writes to `documentDirectory/hikes/{id}/`
+4. **Download**: `download-store` orchestrates fetching GeoJSON + elevation (paths from the catalog: `tracks/{id}/…`) + POIs (`links/{id}.json` joined with the `pois/{col}_{row}.json` squares) → writes to `documentDirectory/hikes/{id}/` (`geojson.json`, `elevation.json`, `pois.json`)
 5. **Offline view**: `use-offline-hike` reads local files, `TrailMap` renders GeoJSON on MapLibre
 
 ## GPX Import
@@ -111,10 +111,11 @@ src/
 User-provided GPX files become saved hikes, stored as a single "section" of a synthetic route.
 
 1. **Entry**: file icon in Saved header (`expo-document-picker`) or OS "Open with" (`app/+native-intent.tsx` redirects `file://`/`content://` URIs; iOS `CFBundleDocumentTypes` + Android `intentFilters` in `app.json`). Both land on `app/(tabs)/saved/import.tsx`
-2. **Parse**: `services/gpx-import.ts` reads the file, `lib/gpx.ts` parses (regex, no XML dep) and builds a `Route` (id `gpx-<coordinate hash>`, `path_ref` "GPX"), GeoJSON, elevation profile (times via Naismith)
-3. **Style**: import screen asks light/dark map style, then `download-store.startSectionDownload(..., importedTrack)`
-4. **Storage**: `offline-storage.saveImportedSectionData` writes `hikes/{id}/sections/{sectionId}/`, then reuses `downloadSectionTiles` (French grid only)
-5. **Lookup**: `imported-route-store` (Zustand, persisted) holds the `Route`; `services/route-lookup.ts` resolves catalog routes from SQLite, `gpx-` ids from the store. Removing the section also removes the imported route
-6. **Follow**: `gps-store.startFollowing(routeId, slug, sectionId)` — active screen loads section files
+2. **Parse**: `services/gpx-import.ts` reads the file, `lib/gpx.ts` parses (regex, no XML dep) and builds a `Route` (id `gpx-<coordinate hash>`, `path_ref` "GPX") GeoJSON and elevation profile (times via Naismith; none when the file has no elevation)
+3. **POIs**: `services/poi-data.buildTrackPois` loads the POI squares around the track and `lib/poi-linking` links stations, stops, hotels and campings on the device (needs network; import fails otherwise). See `docs/POI_LINKING.md`
+4. **Style**: import screen asks light/dark map style, then `download-store.startSectionDownload(..., importedTrack)`
+5. **Storage**: `offline-storage.saveImportedSectionData` writes `hikes/{id}/sections/{sectionId}/` (incl. `pois.json`), then reuses `downloadSectionTiles` (French grid only)
+6. **Lookup**: `imported-route-store` (Zustand, persisted) holds the `Route`; `services/route-lookup.ts` resolves catalog routes from SQLite, `gpx-` ids from the store. Removing the section also removes the imported route
+7. **Follow**: `gps-store.startFollowing(routeId, slug, sectionId)` — active screen loads section files
 
 Native config changed (`app.json`, `expo-document-picker`): rebuild native after pulling.

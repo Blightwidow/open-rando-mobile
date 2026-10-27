@@ -11,8 +11,9 @@ import { useColors } from "@/hooks/use-colors";
 import { useOfflineMapStyle } from "@/hooks/use-offline-map-style";
 import { useWorldAssetUri } from "@/hooks/use-world-asset";
 import { t } from "@/lib/i18n";
+import { logInfo } from "@/lib/logger";
 import { formatDistance } from "@/lib/format";
-import type { GpsPosition } from "@/stores/gps-store";
+import { useGpsStore, type GpsPosition } from "@/stores/gps-store";
 import type { PointOfInterest } from "@/lib/types";
 
 interface SelectedPoi {
@@ -20,7 +21,8 @@ interface SelectedPoi {
   poiType: string;
   url: string;
   hasDirectUrl: boolean;
-  distanceKm: number;
+  /** Position along the trail; train stations only. */
+  distanceKm: number | null;
 }
 
 function buildPoiUrl(poi: PointOfInterest): { url: string; hasDirectUrl: boolean } {
@@ -70,11 +72,129 @@ function computeScale(zoomLevel: number, latitudeDeg: number): ScaleInfo {
   return { widthPx, label };
 }
 
+type CameraRefObject = React.RefObject<MapLibreGL.CameraRef | null>;
+
+// The three components below subscribe to the GPS position themselves. TrailMap and its
+// MapView/Camera must not re-render on every position update: the native camera can
+// re-apply its last stop when its view is updated, which snapped the map back each time.
+
+function GpsLayers() {
+  const position = useGpsStore((state) => state.position);
+  const shape = useMemo(() => {
+    if (!position) return null;
+    return {
+      type: "FeatureCollection" as const,
+      features: [
+        {
+          type: "Feature" as const,
+          geometry: {
+            type: "Point" as const,
+            coordinates: [position.longitude, position.latitude],
+          },
+          properties: { accuracy: position.accuracy },
+        },
+      ],
+    };
+  }, [position]);
+
+  if (!shape) return null;
+  return (
+    <MapLibreGL.ShapeSource id="gps-source" shape={shape}>
+      <MapLibreGL.CircleLayer
+        id="gps-accuracy-ring"
+        style={{
+          circleRadius: 30,
+          circleColor: GPS_ACCURACY_COLOR,
+          circleOpacity: 1,
+          circlePitchAlignment: "map",
+        }}
+      />
+      <MapLibreGL.CircleLayer
+        id="gps-dot"
+        style={{
+          circleRadius: 7,
+          circleColor: GPS_DOT_COLOR,
+          circleStrokeColor: "#ffffff",
+          circleStrokeWidth: 2,
+          circlePitchAlignment: "map",
+        }}
+      />
+    </MapLibreGL.ShapeSource>
+  );
+}
+
+const CENTER_ANIMATION_MILLISECONDS = 500;
+let neutralizeStopTimer: ReturnType<typeof setTimeout> | null = null;
+
+/**
+ * The native camera keeps its last stop and re-applies it whenever its view is updated, for
+ * instance on any re-render (the scale bar re-renders after every pan). Left as is, the map
+ * would snap back to the centering position each time the user pans. Once the move is over,
+ * replace the stored stop with one that has no target, which leaves the camera where it is.
+ */
+function centerOnPosition(cameraRef: CameraRefObject, position: GpsPosition): void {
+  cameraRef.current?.setCamera({
+    centerCoordinate: [position.longitude, position.latitude],
+    zoomLevel: 14,
+    animationDuration: CENTER_ANIMATION_MILLISECONDS,
+  });
+
+  if (neutralizeStopTimer) clearTimeout(neutralizeStopTimer);
+  neutralizeStopTimer = setTimeout(() => {
+    neutralizeStopTimer = null;
+    cameraRef.current?.setCamera({ animationDuration: 0 });
+  }, CENTER_ANIMATION_MILLISECONDS + 200);
+}
+
+/**
+ * Centers on the user once per hike, at the first GPS fix; never again, and not if the
+ * user already panned the map. The recenter button is the only way back afterwards.
+ */
+function FirstFixCentering({ cameraRef }: { cameraRef: CameraRefObject }) {
+  const position = useGpsStore((state) => state.position);
+
+  useEffect(() => {
+    if (!position) return;
+    logInfo(
+      "trail-map",
+      `position update ${position.latitude.toFixed(5)},${position.longitude.toFixed(5)}`,
+    );
+    const { isCameraSettled, settleCamera } = useGpsStore.getState();
+    if (isCameraSettled || !cameraRef.current) return;
+    settleCamera();
+    logInfo("trail-map", "first GPS fix: centering once");
+    centerOnPosition(cameraRef, position);
+  }, [position, cameraRef]);
+
+  return null;
+}
+
+function RecenterButton({
+  cameraRef,
+  style,
+}: {
+  cameraRef: CameraRefObject;
+  style: ViewStyle;
+}) {
+  const position = useGpsStore((state) => state.position);
+  if (!position) return null;
+  return (
+    <Pressable
+      style={style}
+      onPress={() => {
+        logInfo("trail-map", "recenter button pressed");
+        centerOnPosition(cameraRef, position);
+      }}
+    >
+      <Ionicons name="locate" size={22} color={GPS_DOT_COLOR} />
+    </Pressable>
+  );
+}
+
 interface TrailMapProps {
   geoJson: unknown;
   bbox: [number, number, number, number];
   pois?: PointOfInterest[];
-  userPosition?: GpsPosition | null;
   followUserLocation?: boolean;
   mapStyle?: MapStyle;
   routeId?: string;
@@ -87,7 +207,6 @@ export function TrailMap({
   geoJson,
   bbox,
   pois,
-  userPosition,
   followUserLocation,
   mapStyle: mapStyleProp,
   routeId,
@@ -98,8 +217,6 @@ export function TrailMap({
   const themeColors = useColors();
   const insets = useSafeAreaInsets();
   const cameraRef = useRef<MapLibreGL.CameraRef>(null);
-  const hasCenteredRef = useRef(false);
-  const hasUserPannedRef = useRef(false);
   const [selectedPoi, setSelectedPoi] = useState<SelectedPoi | null>(null);
   const [scaleInfo, setScaleInfo] = useState<ScaleInfo | null>(null);
 
@@ -240,34 +357,31 @@ export function TrailMap({
     [bbox],
   );
 
-  // Center on user once at the first GPS fix; never again, and not if the user already
-  // panned the map. The recenter button is the only way back afterwards.
   useEffect(() => {
-    if (
-      followUserLocation &&
-      userPosition &&
-      cameraRef.current &&
-      !hasCenteredRef.current
-    ) {
-      hasCenteredRef.current = true;
-      if (hasUserPannedRef.current) return;
-      cameraRef.current.setCamera({
-        centerCoordinate: [userPosition.longitude, userPosition.latitude],
-        zoomLevel: 14,
-        animationDuration: 500,
-      });
-    }
-  }, [followUserLocation, userPosition]);
+    logInfo("trail-map", `mounted (followUserLocation=${String(followUserLocation)})`);
+    return () => logInfo("trail-map", "unmounted");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleRegionDidChange = useCallback(
     (feature: GeoJSON.Feature<GeoJSON.Point, RegionPayload>) => {
-      if (feature.properties.isUserInteraction) hasUserPannedRef.current = true;
+      if (followUserLocation) {
+        if (feature.properties.isUserInteraction) {
+          useGpsStore.getState().settleCamera();
+        } else {
+          const [longitude, latitude] = feature.geometry.coordinates;
+          logInfo(
+            "trail-map",
+            `programmatic camera move: zoom=${feature.properties.zoomLevel.toFixed(1)} center=${latitude.toFixed(5)},${longitude.toFixed(5)}`,
+          );
+        }
+      }
       if (!showScaleBar) return;
       const zoom = feature.properties.zoomLevel;
       const latitude = feature.geometry.coordinates[1];
       setScaleInfo(computeScale(zoom, latitude));
     },
-    [showScaleBar],
+    [showScaleBar, followUserLocation],
   );
 
   const poisGeoJson = useMemo(() => {
@@ -290,25 +404,6 @@ export function TrailMap({
     };
   }, [pois]);
 
-  const gpsPointGeoJson = useMemo(() => {
-    if (!userPosition) return null;
-    return {
-      type: "FeatureCollection" as const,
-      features: [
-        {
-          type: "Feature" as const,
-          geometry: {
-            type: "Point" as const,
-            coordinates: [userPosition.longitude, userPosition.latitude],
-          },
-          properties: {
-            accuracy: userPosition.accuracy,
-          },
-        },
-      ],
-    };
-  }, [userPosition]);
-
   const handlePoiPress = (
     event: Parameters<
       NonNullable<React.ComponentProps<typeof MapLibreGL.ShapeSource>["onPress"]>
@@ -322,18 +417,8 @@ export function TrailMap({
       poiType: String(props.poiType ?? ""),
       url: String(props.url ?? ""),
       hasDirectUrl: Boolean(props.hasDirectUrl),
-      distanceKm: Number(props.distanceKm ?? 0),
+      distanceKm: typeof props.distanceKm === "number" ? props.distanceKm : null,
     });
-  };
-
-  const handleRecenter = () => {
-    if (userPosition && cameraRef.current) {
-      cameraRef.current.setCamera({
-        centerCoordinate: [userPosition.longitude, userPosition.latitude],
-        zoomLevel: 14,
-        animationDuration: 500,
-      });
-    }
   };
 
   return (
@@ -380,29 +465,7 @@ export function TrailMap({
           />
         </MapLibreGL.ShapeSource>
 
-        {gpsPointGeoJson && (
-          <MapLibreGL.ShapeSource id="gps-source" shape={gpsPointGeoJson}>
-            <MapLibreGL.CircleLayer
-              id="gps-accuracy-ring"
-              style={{
-                circleRadius: 30,
-                circleColor: GPS_ACCURACY_COLOR,
-                circleOpacity: 1,
-                circlePitchAlignment: "map",
-              }}
-            />
-            <MapLibreGL.CircleLayer
-              id="gps-dot"
-              style={{
-                circleRadius: 7,
-                circleColor: GPS_DOT_COLOR,
-                circleStrokeColor: "#ffffff",
-                circleStrokeWidth: 2,
-                circlePitchAlignment: "map",
-              }}
-            />
-          </MapLibreGL.ShapeSource>
-        )}
+        {followUserLocation && <GpsLayers />}
 
         {poisGeoJson && (
           <MapLibreGL.ShapeSource
@@ -438,10 +501,11 @@ export function TrailMap({
         )}
       </MapLibreGL.MapView>
 
-      {userPosition && (
-        <Pressable style={styles.recenterButton} onPress={handleRecenter}>
-          <Ionicons name="locate" size={22} color={GPS_DOT_COLOR} />
-        </Pressable>
+      {followUserLocation && (
+        <>
+          <FirstFixCentering cameraRef={cameraRef} />
+          <RecenterButton cameraRef={cameraRef} style={styles.recenterButton} />
+        </>
       )}
 
       {poisGeoJson && (
@@ -471,8 +535,9 @@ export function TrailMap({
             <View style={styles.poiPanelInfo}>
               <Text style={styles.poiPanelName}>{selectedPoi.name}</Text>
               <Text style={styles.poiPanelType}>
-                {t(`poi.${selectedPoi.poiType}`)} ·{" "}
-                {formatDistance(selectedPoi.distanceKm)} {t("poi.distanceFromStart")}
+                {t(`poi.${selectedPoi.poiType}`)}
+                {selectedPoi.distanceKm !== null &&
+                  ` · ${formatDistance(selectedPoi.distanceKm)} ${t("poi.distanceFromStart")}`}
               </Text>
             </View>
             <Pressable

@@ -1,7 +1,8 @@
 import { Paths, File, Directory } from "expo-file-system";
 import type { MapStyle } from "@/lib/map-style";
-import type { ElevationProfile, Route } from "@/lib/types";
+import type { ElevationProfile, PointOfInterest, Route } from "@/lib/types";
 import { fetchElevation, fetchGeoJson } from "./api";
+import { buildRoutePois } from "./poi-data";
 import { logDebug, logInfo, logWarn } from "@/lib/logger";
 import {
   downloadRouteTiles,
@@ -11,6 +12,7 @@ import {
   removeSectionTiles,
 } from "./offline-tiles";
 import { sliceRouteByKm } from "@/lib/geometry";
+import { poisForSection } from "@/lib/route-pois";
 import {
   baseRootDirectory,
   gridRootDirectory,
@@ -38,6 +40,19 @@ function geoJsonFile(routeId: string): File {
 
 function elevationFile(routeId: string): File {
   return new File(routeDirectory(routeId), "elevation.json");
+}
+
+function poisFile(routeId: string): File {
+  return new File(routeDirectory(routeId), "pois.json");
+}
+
+function sectionPoisFile(routeId: string, sectionId: string): File {
+  return new File(sectionDirectory(routeId, sectionId), "pois.json");
+}
+
+function writeJsonFile(target: File, value: unknown): void {
+  if (!target.exists) target.create();
+  target.write(JSON.stringify(value));
 }
 
 function sectionGeoJsonFile(routeId: string, sectionId: string): File {
@@ -83,12 +98,15 @@ export async function downloadRouteData(
 
   onProgress?.(0.05);
 
-  const [geoJson, elevation] = await Promise.all([
-    fetchGeoJson(route.id, signal),
-    fetchElevation(route.id, signal),
+  const [geoJson, elevation, pois] = await Promise.all([
+    fetchGeoJson(route, signal),
+    fetchElevation(route, signal),
+    buildRoutePois(route, signal),
   ]);
 
   onProgress?.(0.2);
+
+  writeJsonFile(poisFile(route.id), pois);
 
   const geoJsonTarget = geoJsonFile(route.id);
   const elevationTarget = elevationFile(route.id);
@@ -140,9 +158,10 @@ export async function downloadSectionData(
 
   onProgress?.(0.05);
 
-  const [geoJson, elevation] = await Promise.all([
-    fetchGeoJson(route.id, signal),
-    fetchElevation(route.id, signal),
+  const [geoJson, elevation, routePois] = await Promise.all([
+    fetchGeoJson(route, signal),
+    fetchElevation(route, signal),
+    buildRoutePois(route, signal),
   ]);
 
   onProgress?.(0.15);
@@ -155,6 +174,11 @@ export async function downloadSectionData(
   logInfo(
     "offline-storage",
     `Section ${sectionId} sliced: bbox=${JSON.stringify(sliced.bbox)}`,
+  );
+
+  writeJsonFile(
+    sectionPoisFile(route.id, sectionId),
+    poisForSection(routePois, fromKm, toKm, sliced.bbox),
   );
 
   const geoJsonTarget = sectionGeoJsonFile(route.id, sectionId);
@@ -189,6 +213,7 @@ export async function saveImportedSectionData(
   sectionId: string,
   geoJson: GeoJSON.FeatureCollection,
   elevation: ElevationProfile,
+  pois: PointOfInterest[],
   bbox: [number, number, number, number],
   mapStyle: MapStyle,
   onProgress?: (progress: number) => void,
@@ -202,6 +227,7 @@ export async function saveImportedSectionData(
   const sectionDir = sectionDirectory(routeId, sectionId);
   if (!sectionDir.exists) sectionDir.create();
 
+  writeJsonFile(sectionPoisFile(routeId, sectionId), pois);
   const geoJsonTarget = sectionGeoJsonFile(routeId, sectionId);
   const elevationTarget = sectionElevationFile(routeId, sectionId);
   if (!geoJsonTarget.exists) geoJsonTarget.create();
@@ -273,6 +299,7 @@ export function deleteRouteData(routeId: string): void {
   logInfo("offline-storage", `Deleting full route data for ${routeId}`);
   safeDeleteFile(geoJsonFile(routeId));
   safeDeleteFile(elevationFile(routeId));
+  safeDeleteFile(poisFile(routeId));
   removeRouteTiles(routeId);
   if (routeDirectoryIsEmpty(routeId)) {
     safeDeleteDir(routeDirectory(routeId));
@@ -332,6 +359,23 @@ export async function readSectionElevation(
 ): Promise<ElevationProfile> {
   const content = await sectionElevationFile(routeId, sectionId).text();
   return JSON.parse(content) as ElevationProfile;
+}
+
+async function readPoisFile(source: File): Promise<PointOfInterest[]> {
+  // Routes saved before POIs were split from the catalog have no pois.json
+  if (!source.exists) return [];
+  return JSON.parse(await source.text()) as PointOfInterest[];
+}
+
+export function readPois(routeId: string): Promise<PointOfInterest[]> {
+  return readPoisFile(poisFile(routeId));
+}
+
+export function readSectionPois(
+  routeId: string,
+  sectionId: string,
+): Promise<PointOfInterest[]> {
+  return readPoisFile(sectionPoisFile(routeId, sectionId));
 }
 
 export function getDownloadedRouteIds(): string[] {

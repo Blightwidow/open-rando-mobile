@@ -101,7 +101,18 @@ describe("buildImportedRoute", () => {
     expect(unnamed.route.path_name).toBe("my-file");
   });
 
-  it("produces empty elevation profile when track has no elevation", () => {
+  it("builds an elevation profile from the track elevations", () => {
+    expect(imported.elevation.elevations_m).toEqual([1000, 1100, 1050]);
+    expect(imported.elevation.distances_km).toHaveLength(3);
+  });
+
+  it("gives every elevation sample a matching time estimate", () => {
+    expect(imported.elevation.times_min).toHaveLength(
+      imported.elevation.distances_km.length,
+    );
+  });
+
+  it("produces an empty profile when the track has no elevation", () => {
     const flat = buildImportedRoute(
       parseGpx(
         `<gpx><trk><trkseg><trkpt lat="45" lon="6"/><trkpt lat="45.1" lon="6"/></trkseg></trk></gpx>`,
@@ -112,9 +123,7 @@ describe("buildImportedRoute", () => {
     expect(flat.elevation.distances_km).toEqual([]);
   });
 
-  it("gives every elevation sample a matching time estimate", () => {
-    expect(imported.elevation.times_min).toHaveLength(
-      imported.elevation.distances_km.length,
-    );
+  it("starts with no linked POIs", () => {
+    expect(imported.route.poi_counts.train_station).toBe(0);
   });
 });

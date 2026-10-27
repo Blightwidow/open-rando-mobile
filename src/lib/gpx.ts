@@ -207,7 +207,8 @@ export function buildImportedRoute(
     ],
   };
 
-  // An empty profile makes ElevationChart render nothing
+  // An empty profile (no elevation in the file) makes ElevationChart render nothing.
+  // Station positions are filled in at read time from the linked POIs.
   const elevation: ElevationProfile = {
     distances_km: hasElevation ? distancesKm : [],
     elevations_m: elevationsMeters,
@@ -222,7 +223,13 @@ export function buildImportedRoute(
     path_name: name,
     description: "",
     osm_relation_id: 0,
-    pois: [],
+    poi_counts: {
+      train_station: 0,
+      bus_stop: 0,
+      hotel: 0,
+      camping: 0,
+      train_station_with_rail_service: 0,
+    },
     distance_km: totalKm,
     elevation_gain_m: Math.round(totals.gain),
     elevation_loss_m: Math.round(totals.loss),
@@ -234,6 +241,7 @@ export function buildImportedRoute(
     departement: "",
     gpx_path: "",
     geojson_path: "",
+    elevation_path: "",
     is_circular_trail: false,
     terrain: [],
     last_updated: importedAt,

@@ -157,6 +157,8 @@ const translations: Record<Locale, Record<string, string>> = {
     "gpx.invalidFile": "Ce fichier ne contient aucun tracé GPX valide.",
     "gpx.alreadyImported": "Ce tracé est déjà importé",
     "gpx.imported": "Tracé importé",
+    "gpx.poiFailed":
+      "Impossible de charger les gares et arrêts autour du tracé. Vérifiez votre connexion.",
     "gpx.close": "Fermer",
 
     // Developer
@@ -313,6 +315,8 @@ const translations: Record<Locale, Record<string, string>> = {
     "gpx.invalidFile": "This file does not contain a valid GPX track.",
     "gpx.alreadyImported": "This track is already imported",
     "gpx.imported": "Track imported",
+    "gpx.poiFailed":
+      "Could not load stations and stops around the track. Check your connection.",
     "gpx.close": "Close",
 
     // Developer
