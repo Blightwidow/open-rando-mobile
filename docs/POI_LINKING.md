@@ -20,7 +20,8 @@ The join runs at download time and the result is saved as `pois.json` next to th
 `geojson.json` (`sections/<id>/pois.json` for sections, filtered by `poisForSection`). We save the
 joined POIs rather than the raw links file and squares: a few hundred POIs instead of several MB
 of squares, and nothing to garbage-collect or revalidate offline. `elevation.json` has no station
-positions any more; `use-offline-route` fills them from the train stations' `distance_km`.
+positions any more; `use-offline-route` fills them from the train stations' `distance_km`
+(imported tracks too).
 
 Routes saved before the split have no `pois.json` and show no POIs until downloaded again.
 
@@ -34,7 +35,8 @@ Routes saved before the split have no `pois.json` and show no POIs until downloa
   or within `0.001` of it), then stations that are never the closest to any track vertex within
   5 km are dropped. Hotels and campings only need to be in range.
 - Position along the track: walked haversine distance up to the nearest point (train stations).
-- No elevation profile for custom tracks (product decision). Gain and loss stay as stats.
+- Custom tracks keep an elevation profile built from the GPX elevations. The backend brief says
+  none (product decision); restored on request. Station ticks come from the linked stations.
 
 Linking runs when importing (`app/(tabs)/saved/import.tsx`, needs the network like the tile
 download) and the result is saved as `pois.json` with the imported track. Importing fails with a

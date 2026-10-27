@@ -111,7 +111,7 @@ src/
 User-provided GPX files become saved hikes, stored as a single "section" of a synthetic route.
 
 1. **Entry**: file icon in Saved header (`expo-document-picker`) or OS "Open with" (`app/+native-intent.tsx` redirects `file://`/`content://` URIs; iOS `CFBundleDocumentTypes` + Android `intentFilters` in `app.json`). Both land on `app/(tabs)/saved/import.tsx`
-2. **Parse**: `services/gpx-import.ts` reads the file, `lib/gpx.ts` parses (regex, no XML dep) and builds a `Route` (id `gpx-<coordinate hash>`, `path_ref` "GPX") and GeoJSON. No elevation profile for custom tracks (gain/loss stay as stats)
+2. **Parse**: `services/gpx-import.ts` reads the file, `lib/gpx.ts` parses (regex, no XML dep) and builds a `Route` (id `gpx-<coordinate hash>`, `path_ref` "GPX") GeoJSON and elevation profile (times via Naismith; none when the file has no elevation)
 3. **POIs**: `services/poi-data.buildTrackPois` loads the POI squares around the track and `lib/poi-linking` links stations, stops, hotels and campings on the device (needs network; import fails otherwise). See `docs/POI_LINKING.md`
 4. **Style**: import screen asks light/dark map style, then `download-store.startSectionDownload(..., importedTrack)`
 5. **Storage**: `offline-storage.saveImportedSectionData` writes `hikes/{id}/sections/{sectionId}/` (incl. `pois.json`), then reuses `downloadSectionTiles` (French grid only)

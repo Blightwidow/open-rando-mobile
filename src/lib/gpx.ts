@@ -15,6 +15,8 @@ export interface ParsedGpx {
 
 export class GpxParseError extends Error {}
 
+const HIKING_SPEED_KM_PER_HOUR = 4;
+const ASCENT_METERS_PER_HOUR = 600;
 // Ignore elevation jitter below this threshold when summing gain/loss
 const ELEVATION_NOISE_METERS = 3;
 
@@ -93,10 +95,17 @@ export function parseGpx(xml: string): ParsedGpx {
   return { name: extractName(xml), points };
 }
 
-function sumElevation(elevations: number[]): { gain: number; loss: number } {
+interface ElevationTotals {
+  gain: number;
+  loss: number;
+  cumulativeGain: number[];
+}
+
+function sumElevation(elevations: number[]): ElevationTotals {
   let gain = 0;
   let loss = 0;
   let reference = elevations[0];
+  const cumulativeGain: number[] = [];
   for (const elevation of elevations) {
     const difference = elevation - reference;
     if (difference >= ELEVATION_NOISE_METERS) {
@@ -106,8 +115,9 @@ function sumElevation(elevations: number[]): { gain: number; loss: number } {
       loss -= difference;
       reference = elevation;
     }
+    cumulativeGain.push(gain);
   }
-  return { gain, loss };
+  return { gain, loss, cumulativeGain };
 }
 
 export interface ImportedGpxRoute {
@@ -167,7 +177,17 @@ export function buildImportedRoute(
   const elevationsMeters = hasElevation
     ? points.map((point) => point.elevationMeters as number)
     : [];
-  const totals = hasElevation ? sumElevation(elevationsMeters) : { gain: 0, loss: 0 };
+  const totals: ElevationTotals = hasElevation
+    ? sumElevation(elevationsMeters)
+    : { gain: 0, loss: 0, cumulativeGain: [] };
+
+  // Naismith's rule: walking time plus ascent penalty
+  const timesMinutes = distancesKm.map((distanceKm, index) => {
+    const ascentSoFar = totals.cumulativeGain[index] ?? 0;
+    return (
+      (distanceKm / HIKING_SPEED_KM_PER_HOUR + ascentSoFar / ASCENT_METERS_PER_HOUR) * 60
+    );
+  });
 
   const coordinates = points.map((point) => [point.longitude, point.latitude]) as [
     number,
@@ -187,13 +207,12 @@ export function buildImportedRoute(
     ],
   };
 
-  // Product decision: no elevation profile for custom tracks. An empty profile (kept so the
-  // offline layout stays uniform) makes ElevationChart render nothing; gain and loss stay
-  // available as route stats.
+  // An empty profile (no elevation in the file) makes ElevationChart render nothing.
+  // Station positions are filled in at read time from the linked POIs.
   const elevation: ElevationProfile = {
-    distances_km: [],
-    elevations_m: [],
-    times_min: [],
+    distances_km: hasElevation ? distancesKm : [],
+    elevations_m: elevationsMeters,
+    times_min: hasElevation ? timesMinutes : [],
     station_positions_km: [],
   };
 
