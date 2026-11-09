@@ -9,14 +9,32 @@ const PADDING_LEFT = 45;
 const PADDING_RIGHT = 10;
 const PADDING_TOP = 15;
 const PADDING_BOTTOM = 30;
-const CHART_HEIGHT = 200;
+const DEFAULT_CHART_HEIGHT = 200;
 const AXIS_LABEL_COUNT = 5;
 
 interface ElevationChartProps {
   elevation: ElevationProfile;
+  height?: number;
+  /** Where the user is on the track, in km; drawn as a blue marker. */
+  currentKm?: number | null;
+  /**
+   * Controlled selection. When `onSelectKm` is given, a touch selects a point that stays
+   * after release (until the parent clears it) instead of a transient cursor.
+   */
+  selectedKm?: number | null;
+  onSelectKm?: (km: number) => void;
 }
 
-export function ElevationChart({ elevation }: ElevationChartProps) {
+const CURRENT_MARKER_COLOR = "#007AFF";
+const SELECTED_MARKER_COLOR = "#f97316";
+
+export function ElevationChart({
+  elevation,
+  height: chartHeight = DEFAULT_CHART_HEIGHT,
+  currentKm = null,
+  selectedKm = null,
+  onSelectKm,
+}: ElevationChartProps) {
   const { width: screenWidth } = useWindowDimensions();
   const colors = useColors();
   const chartWidth = screenWidth - 2 * spacing.medium;
@@ -42,7 +60,7 @@ export function ElevationChart({ elevation }: ElevationChartProps) {
           maxElevation: 100,
           maxDistance: 1,
           plotWidth: chartWidth - PADDING_LEFT - PADDING_RIGHT,
-          plotHeight: CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM,
+          plotHeight: chartHeight - PADDING_TOP - PADDING_BOTTOM,
         };
       }
       const minElev = Math.min(...elevations);
@@ -54,9 +72,9 @@ export function ElevationChart({ elevation }: ElevationChartProps) {
         maxElevation: maxElev + buffer,
         maxDistance: distances[distances.length - 1] ?? 1,
         plotWidth: chartWidth - PADDING_LEFT - PADDING_RIGHT,
-        plotHeight: CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM,
+        plotHeight: chartHeight - PADDING_TOP - PADDING_BOTTOM,
       };
-    }, [distances, elevations, chartWidth]);
+    }, [distances, elevations, chartWidth, chartHeight]);
 
   const scaleX = (km: number) => PADDING_LEFT + (km / maxDistance) * plotWidth;
   const scaleY = (meters: number) =>
@@ -117,8 +135,7 @@ export function ElevationChart({ elevation }: ElevationChartProps) {
     return labels;
   }, [minElevation, maxElevation]);
 
-  const findNearestIndex = (pixelX: number): number => {
-    const km = ((pixelX - PADDING_LEFT) / plotWidth) * maxDistance;
+  const findNearestIndexForKm = (km: number): number => {
     let nearest = 0;
     let minDiff = Infinity;
     for (let index = 0; index < distances.length; index++) {
@@ -131,21 +148,30 @@ export function ElevationChart({ elevation }: ElevationChartProps) {
     return nearest;
   };
 
+  const findNearestIndex = (pixelX: number): number =>
+    findNearestIndexForKm(((pixelX - PADDING_LEFT) / plotWidth) * maxDistance);
+
+  // PanResponder is created once: keep the latest callback and geometry reachable from it
+  const touchHandlerRef = useRef<(pixelX: number) => void>(() => undefined);
+  touchHandlerRef.current = (pixelX: number) => {
+    if (pixelX < PADDING_LEFT || pixelX > PADDING_LEFT + plotWidth) return;
+    const index = findNearestIndex(pixelX);
+    if (onSelectKm) {
+      onSelectKm(distances[index]!);
+    } else {
+      setCursorIndex(index);
+    }
+  };
+
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
       onPanResponderGrant: (event) => {
-        const pixelX = event.nativeEvent.locationX;
-        if (pixelX >= PADDING_LEFT && pixelX <= PADDING_LEFT + plotWidth) {
-          setCursorIndex(findNearestIndex(pixelX));
-        }
+        touchHandlerRef.current(event.nativeEvent.locationX);
       },
       onPanResponderMove: (event) => {
-        const pixelX = event.nativeEvent.locationX;
-        if (pixelX >= PADDING_LEFT && pixelX <= PADDING_LEFT + plotWidth) {
-          setCursorIndex(findNearestIndex(pixelX));
-        }
+        touchHandlerRef.current(event.nativeEvent.locationX);
       },
       onPanResponderRelease: () => {
         setCursorIndex(null);
@@ -183,21 +209,35 @@ export function ElevationChart({ elevation }: ElevationChartProps) {
 
   if (distances.length === 0) return null;
 
-  const cursorDistance = cursorIndex != null ? distances[cursorIndex]! : null;
-  const cursorElevation = cursorIndex != null ? elevations[cursorIndex]! : null;
+  const isControlled = onSelectKm !== undefined;
+  const activeCursorIndex = isControlled
+    ? selectedKm != null
+      ? findNearestIndexForKm(selectedKm)
+      : null
+    : cursorIndex;
+  const cursorDistance = activeCursorIndex != null ? distances[activeCursorIndex]! : null;
+  const cursorElevation =
+    activeCursorIndex != null ? elevations[activeCursorIndex]! : null;
+  const currentElevation =
+    currentKm != null && currentKm >= 0
+      ? elevations[findNearestIndexForKm(currentKm)]!
+      : null;
   const cursorX = cursorDistance != null ? scaleX(cursorDistance) : null;
   const cursorY = cursorElevation != null ? scaleY(cursorElevation) : null;
 
   return (
     <View style={styles.container}>
-      {cursorIndex != null && cursorDistance != null && cursorElevation != null && (
-        <View style={styles.tooltip}>
-          <Text style={styles.tooltipText}>
-            {cursorDistance.toFixed(1)} km · {Math.round(cursorElevation)} m
-          </Text>
-        </View>
-      )}
-      <Svg width={chartWidth} height={CHART_HEIGHT} {...panResponder.panHandlers}>
+      {!isControlled &&
+        cursorIndex != null &&
+        cursorDistance != null &&
+        cursorElevation != null && (
+          <View style={styles.tooltip}>
+            <Text style={styles.tooltipText}>
+              {cursorDistance.toFixed(1)} km · {Math.round(cursorElevation)} m
+            </Text>
+          </View>
+        )}
+      <Svg width={chartWidth} height={chartHeight} {...panResponder.panHandlers}>
         {/* Area fill */}
         <Path d={areaPath} fill={colors.primary + "20"} />
 
@@ -272,6 +312,30 @@ export function ElevationChart({ elevation }: ElevationChartProps) {
           m
         </SvgText>
 
+        {/* Current position */}
+        {currentKm != null && currentElevation != null && (
+          <G>
+            <Line
+              x1={scaleX(currentKm)}
+              y1={PADDING_TOP}
+              x2={scaleX(currentKm)}
+              y2={PADDING_TOP + plotHeight}
+              stroke={CURRENT_MARKER_COLOR}
+              strokeWidth={2}
+            />
+            <Rect
+              x={scaleX(currentKm) - 5}
+              y={scaleY(currentElevation) - 5}
+              width={10}
+              height={10}
+              rx={5}
+              fill={CURRENT_MARKER_COLOR}
+              stroke="#fff"
+              strokeWidth={2}
+            />
+          </G>
+        )}
+
         {/* Cursor */}
         {cursorX != null && cursorY != null && (
           <G>
@@ -280,9 +344,9 @@ export function ElevationChart({ elevation }: ElevationChartProps) {
               y1={PADDING_TOP}
               x2={cursorX}
               y2={PADDING_TOP + plotHeight}
-              stroke={colors.text}
-              strokeWidth={1}
-              opacity={0.6}
+              stroke={isControlled ? SELECTED_MARKER_COLOR : colors.text}
+              strokeWidth={isControlled ? 2 : 1}
+              opacity={isControlled ? 1 : 0.6}
             />
             <Rect
               x={cursorX - 4}
@@ -290,7 +354,7 @@ export function ElevationChart({ elevation }: ElevationChartProps) {
               width={8}
               height={8}
               rx={4}
-              fill={colors.primary}
+              fill={isControlled ? SELECTED_MARKER_COLOR : colors.primary}
               stroke="#fff"
               strokeWidth={2}
             />

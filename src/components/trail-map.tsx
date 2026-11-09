@@ -132,10 +132,14 @@ let neutralizeStopTimer: ReturnType<typeof setTimeout> | null = null;
  * would snap back to the centering position each time the user pans. Once the move is over,
  * replace the stored stop with one that has no target, which leaves the camera where it is.
  */
-function centerOnPosition(cameraRef: CameraRefObject, position: GpsPosition): void {
+function centerOnCoordinate(
+  cameraRef: CameraRefObject,
+  coordinate: [number, number],
+  zoomLevel?: number,
+): void {
   cameraRef.current?.setCamera({
-    centerCoordinate: [position.longitude, position.latitude],
-    zoomLevel: 14,
+    centerCoordinate: coordinate,
+    ...(zoomLevel === undefined ? {} : { zoomLevel }),
     animationDuration: CENTER_ANIMATION_MILLISECONDS,
   });
 
@@ -144,6 +148,60 @@ function centerOnPosition(cameraRef: CameraRefObject, position: GpsPosition): vo
     neutralizeStopTimer = null;
     cameraRef.current?.setCamera({ animationDuration: 0 });
   }, CENTER_ANIMATION_MILLISECONDS + 200);
+}
+
+function centerOnPosition(cameraRef: CameraRefObject, position: GpsPosition): void {
+  centerOnCoordinate(cameraRef, [position.longitude, position.latitude], 14);
+}
+
+const SELECTED_POINT_COLOR = "#f97316";
+const SELECTED_POINT_CAMERA_DELAY_MILLISECONDS = 200;
+
+/** Marker for the point picked on the elevation chart; the map follows the selection. */
+function SelectedPointLayer({ cameraRef }: { cameraRef: CameraRefObject }) {
+  const selectedPoint = useGpsStore((state) => state.selectedTrailPoint);
+  const shape = useMemo(() => {
+    if (!selectedPoint) return null;
+    return {
+      type: "FeatureCollection" as const,
+      features: [
+        {
+          type: "Feature" as const,
+          geometry: {
+            type: "Point" as const,
+            coordinates: [selectedPoint.longitude, selectedPoint.latitude],
+          },
+          properties: {},
+        },
+      ],
+    };
+  }, [selectedPoint]);
+
+  // Debounced so dragging a finger along the chart does not queue a camera move per event
+  useEffect(() => {
+    if (!selectedPoint) return;
+    const timer = setTimeout(() => {
+      useGpsStore.getState().settleCamera();
+      centerOnCoordinate(cameraRef, [selectedPoint.longitude, selectedPoint.latitude]);
+    }, SELECTED_POINT_CAMERA_DELAY_MILLISECONDS);
+    return () => clearTimeout(timer);
+  }, [selectedPoint, cameraRef]);
+
+  if (!shape) return null;
+  return (
+    <MapLibreGL.ShapeSource id="selected-point-source" shape={shape}>
+      <MapLibreGL.CircleLayer
+        id="selected-point"
+        style={{
+          circleRadius: 9,
+          circleColor: SELECTED_POINT_COLOR,
+          circleStrokeColor: "#ffffff",
+          circleStrokeWidth: 3,
+          circlePitchAlignment: "map",
+        }}
+      />
+    </MapLibreGL.ShapeSource>
+  );
 }
 
 /**
@@ -284,19 +342,26 @@ export function TrailMap({
         },
         scaleBar: {
           position: "absolute",
-          bottom: 28,
-          left: 8,
+          // Followed hikes have the stop button at the bottom left: sit to its right
+          bottom: followUserLocation ? 16 : 28,
+          left: followUserLocation ? 72 : 8,
+          backgroundColor: `${themeColors.surface}F2`,
+          borderRadius: borderRadius.small,
+          borderWidth: 1,
+          borderColor: themeColors.border,
+          paddingHorizontal: 6,
+          paddingVertical: 4,
         },
         scaleBarLabel: {
-          fontSize: 10,
+          fontSize: 11,
+          fontWeight: "600",
           color: themeColors.text,
           marginBottom: 2,
         },
         scaleBarLine: {
-          height: 4,
+          height: 5,
           backgroundColor: themeColors.text,
-          borderWidth: 1,
-          borderColor: themeColors.text,
+          borderRadius: 1,
         },
         poiPanel: {
           position: "absolute",
@@ -466,6 +531,7 @@ export function TrailMap({
         </MapLibreGL.ShapeSource>
 
         {followUserLocation && <GpsLayers />}
+        {followUserLocation && <SelectedPointLayer cameraRef={cameraRef} />}
 
         {poisGeoJson && (
           <MapLibreGL.ShapeSource

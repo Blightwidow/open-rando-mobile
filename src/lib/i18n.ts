@@ -83,6 +83,12 @@ const translations: Record<Locale, Record<string, string>> = {
     "settings.theme.light": "Clair",
     "settings.theme.dark": "Sombre",
     "settings.theme.system": "Système",
+    "settings.gps": "GPS",
+    "settings.gpsPolling.precise": "Précis",
+    "settings.gpsPolling.balanced": "Équilibré",
+    "settings.gpsPolling.saver": "Économie",
+    "settings.gpsPolling.description":
+      "Fréquence de mise à jour de la position pendant une randonnée (écran allumé uniquement). Précis : toutes les 3 s. Équilibré : 10 s. Économie : 30 s, moins précis, bien moins de batterie.",
 
     // Difficulty
     "difficulty.easy": "Facile",
@@ -119,6 +125,11 @@ const translations: Record<Locale, Record<string, string>> = {
     "gps.permissionDenied":
       "L'accès à la localisation a été refusé. Activez-le dans les réglages de votre appareil.",
     "gps.searching": "Recherche du signal GPS…",
+    "active.remaining": "Restant",
+    "active.selectedPoint": "Point choisi",
+    "active.ahead": "devant",
+    "active.behind": "derrière",
+    "active.clearSelection": "Effacer la sélection",
 
     // Follow route
     "tabs.active": "En cours",
@@ -243,6 +254,12 @@ const translations: Record<Locale, Record<string, string>> = {
     "settings.theme.light": "Light",
     "settings.theme.dark": "Dark",
     "settings.theme.system": "System",
+    "settings.gps": "GPS",
+    "settings.gpsPolling.precise": "Precise",
+    "settings.gpsPolling.balanced": "Balanced",
+    "settings.gpsPolling.saver": "Saver",
+    "settings.gpsPolling.description":
+      "How often your position updates during a hike (screen on only). Precise: every 3 s. Balanced: 10 s. Saver: 30 s, less accurate, much lighter on battery.",
 
     // Difficulty
     "difficulty.easy": "Easy",
@@ -279,6 +296,11 @@ const translations: Record<Locale, Record<string, string>> = {
     "gps.permissionDenied":
       "Location access was denied. Enable it in your device settings.",
     "gps.searching": "Searching for GPS signal…",
+    "active.remaining": "Remaining",
+    "active.selectedPoint": "Selected point",
+    "active.ahead": "ahead",
+    "active.behind": "behind",
+    "active.clearSelection": "Clear selection",
 
     // Follow route
     "tabs.active": "Active",

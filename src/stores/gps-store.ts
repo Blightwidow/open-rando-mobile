@@ -6,6 +6,11 @@ export interface GpsPosition {
   accuracy: number;
 }
 
+export interface SelectedTrailPoint {
+  latitude: number;
+  longitude: number;
+}
+
 interface GpsState {
   isTracking: boolean;
   activeRouteId: string | null;
@@ -17,7 +22,10 @@ interface GpsState {
    * Lives here, not in the map component, so a remounted map never recenters again.
    */
   isCameraSettled: boolean;
+  /** Point picked on the elevation chart; the map shows a marker there. */
+  selectedTrailPoint: SelectedTrailPoint | null;
 
+  selectTrailPoint: (point: SelectedTrailPoint | null) => void;
   settleCamera: () => void;
   startFollowing: (routeId: string, routeSlug: string, sectionId?: string) => void;
   stopFollowing: () => void;
@@ -31,6 +39,11 @@ export const useGpsStore = create<GpsState>()((set) => ({
   activeSectionId: null,
   position: null,
   isCameraSettled: false,
+  selectedTrailPoint: null,
+
+  selectTrailPoint: (point: SelectedTrailPoint | null) => {
+    set({ selectedTrailPoint: point });
+  },
 
   settleCamera: () => {
     set({ isCameraSettled: true });
@@ -44,6 +57,7 @@ export const useGpsStore = create<GpsState>()((set) => ({
       activeSectionId: sectionId ?? null,
       position: null,
       isCameraSettled: false,
+      selectedTrailPoint: null,
     });
   },
 
@@ -55,6 +69,7 @@ export const useGpsStore = create<GpsState>()((set) => ({
       activeSectionId: null,
       position: null,
       isCameraSettled: false,
+      selectedTrailPoint: null,
     });
   },
 

@@ -18,7 +18,7 @@ function haversineKm(a: Coord, b: Coord): number {
   return 2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(s));
 }
 
-function extractLineStrings(geoJson: unknown): Coord[][] {
+export function extractLineStrings(geoJson: unknown): Coord[][] {
   const result: Coord[][] = [];
   if (!geoJson || typeof geoJson !== "object") return result;
   const obj = geoJson as {

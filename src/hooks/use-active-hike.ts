@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { LocationSubscription } from "expo-location";
 import { useGpsStore } from "@/stores/gps-store";
+import { useSettingsStore } from "@/stores/settings-store";
 import { startLocationWatching, isPositionReliable } from "@/services/location-service";
 
 /**
@@ -11,6 +12,7 @@ import { startLocationWatching, isPositionReliable } from "@/services/location-s
 export function useActiveHike() {
   const isTracking = useGpsStore((state) => state.isTracking);
   const updatePosition = useGpsStore((state) => state.updatePosition);
+  const gpsPollingMode = useSettingsStore((state) => state.gpsPollingMode);
   const subscriptionRef = useRef<LocationSubscription | null>(null);
 
   useEffect(() => {
@@ -27,7 +29,7 @@ export function useActiveHike() {
         location.coords.longitude,
         location.coords.accuracy ?? 0,
       );
-    }).then((subscription) => {
+    }, gpsPollingMode).then((subscription) => {
       if (cancelled) {
         subscription.remove();
       } else {
@@ -40,5 +42,5 @@ export function useActiveHike() {
       subscriptionRef.current?.remove();
       subscriptionRef.current = null;
     };
-  }, [isTracking, updatePosition]);
+  }, [isTracking, updatePosition, gpsPollingMode]);
 }
