@@ -14,6 +14,7 @@ import { useDownloadStore } from "@/stores/download-store";
 import { useActiveHike } from "@/hooks/use-active-hike";
 import { useOfflineRoute } from "@/hooks/use-offline-route";
 import { TrailMap } from "@/components/trail-map";
+import { ActiveHikePanel } from "@/components/active-hike-panel";
 import { spacing, fontSize, borderRadius } from "@/lib/theme";
 import { useColors } from "@/hooks/use-colors";
 import { t } from "@/lib/i18n";
@@ -52,7 +53,7 @@ export default function FollowRouteScreen() {
     if (activeSectionId) return state.sections[activeSectionId]?.mapStyle;
     return activeRouteId ? state.getDownloadState(activeRouteId).mapStyle : undefined;
   });
-  const { route, geoJson, pois } = useOfflineRoute(
+  const { route, geoJson, pois, elevation } = useOfflineRoute(
     activeRouteSlug ?? "",
     activeSectionId ?? undefined,
   );
@@ -62,6 +63,9 @@ export default function FollowRouteScreen() {
     () =>
       StyleSheet.create({
         container: {
+          flex: 1,
+        },
+        mapArea: {
           flex: 1,
         },
         fullScreenMap: {
@@ -116,29 +120,33 @@ export default function FollowRouteScreen() {
 
   return (
     <View style={styles.container}>
-      <TrailMap
-        geoJson={geoJson}
-        bbox={route.bbox}
-        pois={pois}
-        followUserLocation={true}
-        mapStyle={downloadMapStyle}
-        routeId={route.id}
-        showScaleBar={true}
-        style={styles.fullScreenMap}
-        onPoiPanelHeightChange={setPoiPanelHeight}
-      />
+      <View style={styles.mapArea}>
+        <TrailMap
+          geoJson={geoJson}
+          bbox={route.bbox}
+          pois={pois}
+          followUserLocation={true}
+          mapStyle={downloadMapStyle}
+          routeId={route.id}
+          showScaleBar={true}
+          style={styles.fullScreenMap}
+          onPoiPanelHeightChange={setPoiPanelHeight}
+        />
 
-      <SearchingBanner
-        bannerStyle={styles.searchingBanner}
-        textStyle={styles.searchingText}
-      />
+        <SearchingBanner
+          bannerStyle={styles.searchingBanner}
+          textStyle={styles.searchingText}
+        />
 
-      <Pressable
-        style={[styles.stopButton, { bottom: 16 + poiPanelHeight }]}
-        onPress={stopFollowing}
-      >
-        <Ionicons name="stop" size={22} color="#fff" />
-      </Pressable>
+        <Pressable
+          style={[styles.stopButton, { bottom: 16 + poiPanelHeight }]}
+          onPress={stopFollowing}
+        >
+          <Ionicons name="stop" size={22} color="#fff" />
+        </Pressable>
+      </View>
+
+      {elevation && <ActiveHikePanel geoJson={geoJson} elevation={elevation} />}
     </View>
   );
 }

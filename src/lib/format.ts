@@ -25,3 +25,11 @@ export function formatElapsedTime(startTimestamp: number): string {
   }
   return `${minutes}m ${String(seconds).padStart(2, "0")}s`;
 }
+
+export function formatDuration(totalMinutes: number): string {
+  const roundedMinutes = Math.max(0, Math.round(totalMinutes));
+  const hours = Math.floor(roundedMinutes / 60);
+  const minutes = roundedMinutes % 60;
+  if (hours === 0) return `${minutes} min`;
+  return `${hours}h${String(minutes).padStart(2, "0")}`;
+}

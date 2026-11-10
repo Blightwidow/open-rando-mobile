@@ -16,6 +16,7 @@ import { t } from "@/lib/i18n";
 import { useLocale } from "@/hooks/use-locale";
 import type { Locale } from "@/lib/i18n";
 import type { ThemePreference } from "@/stores/settings-store";
+import type { GpsPollingMode } from "@/services/location-service";
 import { shareLog } from "@/lib/logger";
 
 export default function SettingsScreen() {
@@ -24,6 +25,8 @@ export default function SettingsScreen() {
   const setLocale = useSettingsStore((state) => state.setLocale);
   const theme = useSettingsStore((state) => state.theme);
   const setTheme = useSettingsStore((state) => state.setTheme);
+  const gpsPollingMode = useSettingsStore((state) => state.gpsPollingMode);
+  const setGpsPollingMode = useSettingsStore((state) => state.setGpsPollingMode);
   const downloads = useDownloadStore((state) => state.downloads);
   const removeDownload = useDownloadStore((state) => state.removeDownload);
 
@@ -184,6 +187,12 @@ export default function SettingsScreen() {
     { value: "dark", label: t("settings.theme.dark") },
   ];
 
+  const gpsPollingOptions: { value: GpsPollingMode; label: string }[] = [
+    { value: "precise", label: t("settings.gpsPolling.precise") },
+    { value: "balanced", label: t("settings.gpsPolling.balanced") },
+    { value: "saver", label: t("settings.gpsPolling.saver") },
+  ];
+
   return (
     <View style={styles.container}>
       <View style={styles.section}>
@@ -238,6 +247,32 @@ export default function SettingsScreen() {
             </Pressable>
           ))}
         </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>{t("settings.gps")}</Text>
+        <View style={styles.toggle}>
+          {gpsPollingOptions.map(({ value, label }) => (
+            <Pressable
+              key={value}
+              style={[
+                styles.toggleButton,
+                gpsPollingMode === value && styles.toggleButtonActive,
+              ]}
+              onPress={() => setGpsPollingMode(value)}
+            >
+              <Text
+                style={[
+                  styles.toggleButtonText,
+                  gpsPollingMode === value && styles.toggleButtonTextActive,
+                ]}
+              >
+                {label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+        <Text style={styles.description}>{t("settings.gpsPolling.description")}</Text>
       </View>
 
       <View style={styles.section}>

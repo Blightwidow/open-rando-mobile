@@ -1,6 +1,10 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import {
+  DEFAULT_GPS_POLLING_MODE,
+  type GpsPollingMode,
+} from "@/services/location-service";
 import { type Locale, getSystemLocale, setLocale as setI18nLocale } from "@/lib/i18n";
 
 export type ThemePreference = "light" | "dark" | "system";
@@ -10,6 +14,8 @@ interface SettingsState {
   setLocale: (locale: Locale) => void;
   theme: ThemePreference;
   setTheme: (theme: ThemePreference) => void;
+  gpsPollingMode: GpsPollingMode;
+  setGpsPollingMode: (gpsPollingMode: GpsPollingMode) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -23,6 +29,10 @@ export const useSettingsStore = create<SettingsState>()(
       theme: "system",
       setTheme: (theme: ThemePreference) => {
         set({ theme });
+      },
+      gpsPollingMode: DEFAULT_GPS_POLLING_MODE,
+      setGpsPollingMode: (gpsPollingMode: GpsPollingMode) => {
+        set({ gpsPollingMode });
       },
     }),
     {
