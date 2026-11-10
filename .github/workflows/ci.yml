@@ -5,6 +5,8 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  release:
+    types: [published]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
@@ -41,9 +43,15 @@ jobs:
       - name: Test
         run: bun run test
 
+  # APK is built for PRs (test download) and for published releases (attached to the release),
+  # never on plain pushes to main
   build-android:
     name: Build Android APK
+    if: github.event_name != 'push'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
 
     steps:
       - name: Checkout
@@ -70,7 +78,17 @@ jobs:
           # Inlined into the JS bundle; shown in the debug log at startup
           EXPO_PUBLIC_BUILD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
+      - name: Attach APK to release
+        if: github.event_name == 'release'
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk "trainrando-${RELEASE_TAG}.apk"
+          gh release upload "$RELEASE_TAG" "trainrando-${RELEASE_TAG}.apk" --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+
       - name: Upload APK
+        if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: trainrando-apk-${{ github.event.pull_request.head.sha || github.sha }}
