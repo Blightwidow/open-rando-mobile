@@ -15,6 +15,7 @@ import { useDownloadStore } from "@/stores/download-store";
 import { isImportedRouteId } from "@/stores/imported-route-store";
 import { useLocationPermission } from "@/hooks/use-location-permission";
 import { useGpsStore } from "@/stores/gps-store";
+import { DownloadStatus } from "@/components/download-status";
 import { TrailMap } from "@/components/trail-map";
 import { ElevationChart } from "@/components/elevation-chart";
 import { formatDistance, formatElevation } from "@/lib/format";
@@ -46,6 +47,11 @@ export default function OfflineRouteDetailScreen() {
     route?.id ? state.getDownloadState(route.id).mapStyle : undefined,
   );
   const downloadMapStyle = section?.mapStyle ?? fullDownloadMapStyle;
+  const sectionDownloadState = useDownloadStore((state) =>
+    sectionId ? state.getSectionDownloadState(sectionId) : undefined,
+  );
+  const isSectionIncomplete =
+    sectionDownloadState !== undefined && sectionDownloadState.status !== "complete";
   const { request: requestLocationPermission } = useLocationPermission();
   const startFollowing = useGpsStore((state) => state.startFollowing);
   const isTracking = useGpsStore((state) => state.isTracking);
@@ -215,7 +221,9 @@ export default function OfflineRouteDetailScreen() {
           <DifficultyBadge difficulty={route.difficulty} />
         )}
         <Pressable style={styles.downloadedLabel} onPress={handleDelete} hitSlop={8}>
-          <Text style={styles.downloadedLabelText}>{t("download.complete")}</Text>
+          {!isSectionIncomplete && (
+            <Text style={styles.downloadedLabelText}>{t("download.complete")}</Text>
+          )}
           <Ionicons name="trash-outline" size={14} color={colors.error} />
         </Pressable>
       </View>
@@ -241,6 +249,8 @@ export default function OfflineRouteDetailScreen() {
           value={formatElevation(route.elevation_loss_m)}
         />
       </View>
+
+      <DownloadStatus state={sectionDownloadState} />
 
       {geoJson != null && !isTracking && (
         <Pressable

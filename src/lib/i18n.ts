@@ -35,6 +35,10 @@ const translations: Record<Locale, Record<string, string>> = {
     "download.downloading": "Téléchargement… {progress}%",
     "download.complete": "✓ Téléchargé",
     "download.retry": "Réessayer le téléchargement",
+    "download.failed": "Échec du téléchargement",
+    "download.failedReason": "Raison : {reason}",
+    "download.interrupted":
+      "Téléchargement interrompu (application fermée). Supprimez puis réimportez.",
     "download.remove": "Supprimer",
     "download.chooseStyle": "Choisir le style de carte",
     "download.styleLight": "Clair",
@@ -207,6 +211,10 @@ const translations: Record<Locale, Record<string, string>> = {
     "download.downloading": "Downloading... {progress}%",
     "download.complete": "✓ Downloaded",
     "download.retry": "Retry Download",
+    "download.failed": "Download failed",
+    "download.failedReason": "Reason: {reason}",
+    "download.interrupted":
+      "Download interrupted (app was closed). Remove and import again.",
     "download.remove": "Remove",
     "download.chooseStyle": "Choose map style",
     "download.styleLight": "Light",
