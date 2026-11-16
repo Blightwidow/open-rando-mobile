@@ -10,15 +10,21 @@ import { colors, fontSize, spacing, borderRadius } from "@/lib/theme";
 import { useColors } from "@/hooks/use-colors";
 import { useOfflineMapStyle } from "@/hooks/use-offline-map-style";
 import { useWorldAssetUri } from "@/hooks/use-world-asset";
+import { OverlayLayers } from "@/components/overlay-layers";
 import { t } from "@/lib/i18n";
 import { logInfo } from "@/lib/logger";
 import { formatDistance } from "@/lib/format";
+import { displayPhone, normalizePhone, poiTypeLabel } from "@/lib/poi-format";
 import { useGpsStore, type GpsPosition } from "@/stores/gps-store";
 import type { PointOfInterest } from "@/lib/types";
 
 interface SelectedPoi {
   name: string;
   poiType: string;
+  /** Shops and eateries: OSM kind, such as "bakery". */
+  category: string | null;
+  openingHours: string | null;
+  phone: string | null;
   url: string;
   hasDirectUrl: boolean;
   /** Position along the trail; train stations only. */
@@ -41,6 +47,8 @@ const POI_COLOR_STOPS: [string, string][] = [
   ["bus_stop", "#3b82f6"],
   ["camping", "#f59e0b"],
   ["hotel", "#a855f7"],
+  ["shop", "#84cc16"],
+  ["eatery", "#ec4899"],
 ];
 
 const GPS_DOT_COLOR = "#007AFF";
@@ -461,6 +469,9 @@ export function TrailMap({
         },
         properties: {
           poiType: poi.poi_type,
+          category: poi.category ?? null,
+          openingHours: poi.opening_hours ?? null,
+          phone: poi.phone ?? null,
           name: poi.name,
           distanceKm: poi.distance_km,
           ...buildPoiUrl(poi),
@@ -480,6 +491,9 @@ export function TrailMap({
     setSelectedPoi({
       name: String(props.name ?? ""),
       poiType: String(props.poiType ?? ""),
+      category: typeof props.category === "string" ? props.category : null,
+      openingHours: typeof props.openingHours === "string" ? props.openingHours : null,
+      phone: typeof props.phone === "string" ? props.phone : null,
       url: String(props.url ?? ""),
       hasDirectUrl: Boolean(props.hasDirectUrl),
       distanceKm: typeof props.distanceKm === "number" ? props.distanceKm : null,
@@ -505,6 +519,8 @@ export function TrailMap({
           defaultSettings={{ bounds }}
           animationDuration={0}
         />
+
+        <OverlayLayers theme={theme} />
 
         <MapLibreGL.ShapeSource
           id="trail-source"
@@ -601,10 +617,15 @@ export function TrailMap({
             <View style={styles.poiPanelInfo}>
               <Text style={styles.poiPanelName}>{selectedPoi.name}</Text>
               <Text style={styles.poiPanelType}>
-                {t(`poi.${selectedPoi.poiType}`)}
+                {poiTypeLabel(selectedPoi.poiType, selectedPoi.category)}
                 {selectedPoi.distanceKm !== null &&
                   ` · ${formatDistance(selectedPoi.distanceKm)} ${t("poi.distanceFromStart")}`}
               </Text>
+              {selectedPoi.openingHours && (
+                <Text style={styles.poiPanelType}>
+                  {t("poi.openingHours")} {selectedPoi.openingHours}
+                </Text>
+              )}
             </View>
             <Pressable
               onPress={() => {
@@ -625,6 +646,17 @@ export function TrailMap({
               {selectedPoi.hasDirectUrl ? t("poi.viewLink") : t("poi.findOnMaps")}
             </Text>
           </Pressable>
+          {normalizePhone(selectedPoi.phone) && (
+            <Pressable
+              style={styles.poiPanelLink}
+              onPress={() => Linking.openURL(normalizePhone(selectedPoi.phone) as string)}
+            >
+              <Ionicons name="call-outline" size={14} color={themeColors.primary} />
+              <Text style={styles.poiPanelLinkText}>
+                {displayPhone(selectedPoi.phone)}
+              </Text>
+            </Pressable>
+          )}
         </View>
       )}
     </View>

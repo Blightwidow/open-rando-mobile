@@ -55,6 +55,17 @@ describe("linkPoisToTrack", () => {
     expect(links.map((link) => link.poi_id)).toEqual(["node/near"]);
   });
 
+  it("uses a 1.5 km limit for shops and eateries, without position", () => {
+    const links = linkPoisToTrack(TRACK, [
+      poiNorthOfTrack("node/shop", "shop", 4.1, 1400),
+      poiNorthOfTrack("node/eatery", "eatery", 4.2, 1400),
+      poiNorthOfTrack("node/shop-far", "shop", 4.3, 1600),
+      poiNorthOfTrack("node/eatery-far", "eatery", 4.3, 1600),
+    ]);
+    expect(links.map((link) => link.poi_id).sort()).toEqual(["node/eatery", "node/shop"]);
+    expect(links[0].distance_km).toBeNull();
+  });
+
   it("uses a 2 km limit for bus stops and no position", () => {
     const links = linkPoisToTrack(TRACK, [
       poiNorthOfTrack("node/in", "bus_stop", 4.1, 1900),

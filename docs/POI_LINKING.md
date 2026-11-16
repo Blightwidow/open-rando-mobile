@@ -30,10 +30,10 @@ Routes saved before the split have no `pois.json` and show no POIs until downloa
 `lib/poi-linking.linkPoisToTrack` ports `processors/link.py` and `processors/match.py`:
 
 - Pre-filter: POIs within 0.07° of the track simplified at 0.001°.
-- Train stations within 5 km, bus stops 2 km, hotels and campings 3 km.
+- Train stations within 5 km, bus stops 2 km, hotels and campings 3 km, food shops and eateries 1.5 km.
 - Stations and stops: duplicates removed (same name within `500 / 111320` of the trail fraction,
   or within `0.001` of it), then stations that are never the closest to any track vertex within
-  5 km are dropped. Hotels and campings only need to be in range.
+  5 km are dropped. Hotels, campings, shops and eateries only need to be in range. Shops and eateries (`category`, `opening_hours`, `phone`) come from open-rando #63; saved hikes written before it have none, so re-download them to refresh.
 - Position along the track: walked haversine distance up to the nearest point (train stations).
 - Custom tracks keep an elevation profile built from the GPX elevations. The backend brief says
   none (product decision); restored on request. Station ticks come from the linked stations.

@@ -7,6 +7,7 @@ const gridDirectory = new Directory(Paths.document, "grid");
 const routesDirectory = new Directory(Paths.document, "routes");
 const sectionsDirectory = new Directory(Paths.document, "sections");
 const stylesDirectory = new Directory(Paths.document, "styles");
+const overlayDirectory = new Directory(Paths.document, "overlay");
 const gridManifestFile = new File(Paths.document, "grid.json");
 
 export function ensureOfflineDirectories(): void {
@@ -16,6 +17,7 @@ export function ensureOfflineDirectories(): void {
     routesDirectory,
     sectionsDirectory,
     stylesDirectory,
+    overlayDirectory,
   ]) {
     if (!directory.exists) directory.create();
   }
@@ -75,4 +77,9 @@ export function sectionsRootDirectory(): Directory {
 
 export function stylesRootDirectory(): Directory {
   return stylesDirectory;
+}
+
+/** Hiking overlay tiles: one file for all of France, kept apart from `base/` so tile GC leaves it. */
+export function overlayFile(): File {
+  return new File(overlayDirectory, "overlay.pmtiles");
 }

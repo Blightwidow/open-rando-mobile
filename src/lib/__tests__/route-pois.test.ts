@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { joinRoutePois } from "@/lib/route-pois";
+import { countPois, joinRoutePois } from "@/lib/route-pois";
 import type { PoiLink, PoiRecord } from "@/lib/types";
 
 const STATION: PoiRecord = {
@@ -63,5 +63,52 @@ describe("joinRoutePois", () => {
   it("throws when a linked POI is missing from the grid", () => {
     const missing: PoiLink = { ...HOTEL_LINK, poi_id: "node/404" };
     expect(() => joinRoutePois([STATION_LINK, missing], poisById)).toThrow(/node\/404/);
+  });
+});
+
+describe("shops and eateries", () => {
+  const BAKERY: PoiRecord = {
+    id: "node/3",
+    kind: "shop",
+    name: "Boulangerie du Pont",
+    lat: 45.2,
+    lon: 4.2,
+    category: "bakery",
+    opening_hours: "Tu-Su 07:00-19:00",
+    phone: "+33 4 00 00 00 00",
+  };
+  const BAKERY_LINK: PoiLink = {
+    poi_id: "node/3",
+    kind: "shop",
+    distance_to_trail_m: 300,
+    distance_km: null,
+    junction: [4.2, 45.19],
+  };
+
+  it("carries category, opening hours and phone from the grid record", () => {
+    const [bakery] = joinRoutePois([BAKERY_LINK], new Map([[BAKERY.id, BAKERY]]));
+    expect(bakery).toMatchObject({
+      poi_type: "shop",
+      category: "bakery",
+      opening_hours: "Tu-Su 07:00-19:00",
+      phone: "+33 4 00 00 00 00",
+    });
+  });
+
+  it("reads a record without the new fields", () => {
+    const [hotel] = joinRoutePois([HOTEL_LINK], poisById);
+    expect(hotel.category).toBeUndefined();
+    expect(hotel.opening_hours).toBeUndefined();
+    expect(hotel.phone).toBeUndefined();
+  });
+
+  it("counts shops and eateries", () => {
+    const [bakery] = joinRoutePois([BAKERY_LINK], new Map([[BAKERY.id, BAKERY]]));
+    const counts = countPois([
+      bakery,
+      { ...bakery, id: "node/4", poi_type: "eatery" },
+      bakery,
+    ]);
+    expect(counts).toMatchObject({ shop: 2, eatery: 1, hotel: 0 });
   });
 });

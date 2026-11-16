@@ -1,6 +1,12 @@
 import type { MapStyle } from "@/lib/constants";
 
-export type PoiType = "train_station" | "bus_stop" | "camping" | "hotel";
+export type PoiType =
+  | "train_station"
+  | "bus_stop"
+  | "camping"
+  | "hotel"
+  | "shop"
+  | "eatery";
 
 export interface ServiceWindow {
   first_departure_minutes: number;
@@ -23,6 +29,11 @@ export interface PoiRecord {
   lat: number;
   lon: number;
   url?: string | null;
+  /** Shops and eateries: the OSM kind, such as "bakery" or "cafe". */
+  category?: string | null;
+  /** Shops and eateries: raw OSM `opening_hours` value. */
+  opening_hours?: string | null;
+  phone?: string | null;
   transit_lines?: string[];
   rail_service?: RailService | null;
 }
@@ -43,6 +54,9 @@ export interface PoiCounts {
   bus_stop: number;
   hotel: number;
   camping: number;
+  /** Absent from catalogs and saved routes written before shops and eateries existed. */
+  shop?: number;
+  eatery?: number;
   train_station_with_rail_service: number;
 }
 
@@ -78,6 +92,10 @@ export interface PointOfInterest {
   lon: number;
   poi_type: PoiType;
   url?: string;
+  /** Shops and eateries: OSM kind, raw opening hours and phone, each only when mapped. */
+  category?: string;
+  opening_hours?: string;
+  phone?: string;
   transit_lines?: string[];
   /** Position along the trail (train stations only). */
   distance_km?: number;
