@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -36,7 +37,10 @@ export default function SettingsScreen() {
         container: {
           flex: 1,
           backgroundColor: colors.background,
+        },
+        contentContainer: {
           padding: spacing.medium,
+          paddingBottom: spacing.large * 2,
         },
         section: {
           marginBottom: spacing.large,
@@ -194,7 +198,7 @@ export default function SettingsScreen() {
   ];
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{t("settings.language")}</Text>
         <View style={styles.toggle}>
@@ -312,6 +316,6 @@ export default function SettingsScreen() {
           )}
         </Pressable>
       </View>
-    </View>
+    </ScrollView>
   );
 }

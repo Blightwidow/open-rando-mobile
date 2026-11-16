@@ -69,6 +69,16 @@ rm -rf ios && bun run ios    # clean rebuild iOS
 rm -rf android && bun run android  # clean rebuild Android
 ```
 
+## Backwards Compatibility
+
+The app is released: users have hikes, GPX imports and settings on their devices. Never break stored data.
+
+- Persisted shapes (Zustand/AsyncStorage stores, SQLite schema, files under `documentDirectory/hikes/`, `grid.json` cache) must stay readable. Add fields as optional or give defaults; migrate with a store `version` + `migrate`, or a SQLite migration. Never rename or remove a stored field without a migration
+- Read stored data defensively (`?? []`, optional fields): files written by older versions may lack newer fields
+- Keep ids stable (e.g. GPX route id = coordinate hash)
+- Algorithm changes (times, gain/loss) apply to new imports only; saved files are not recomputed. Say "re-import to refresh" in the changelog instead of migrating
+- Remote data (`catalog.json`, tracks, POIs) is produced by the backend: tolerate older and newer shapes
+
 ## Architecture
 
 ```
@@ -111,7 +121,7 @@ src/
 User-provided GPX files become saved hikes, stored as a single "section" of a synthetic route.
 
 1. **Entry**: file icon in Saved header (`expo-document-picker`) or OS "Open with" (`app/+native-intent.tsx` redirects `file://`/`content://` URIs; iOS `CFBundleDocumentTypes` + Android `intentFilters` in `app.json`). Both land on `app/(tabs)/saved/import.tsx`
-2. **Parse**: `services/gpx-import.ts` reads the file, `lib/gpx.ts` parses (regex, no XML dep) and builds a `Route` (id `gpx-<coordinate hash>`, `path_ref` "GPX") GeoJSON and elevation profile (times via Naismith; none when the file has no elevation)
+2. **Parse**: `services/gpx-import.ts` reads the file, `lib/gpx.ts` parses (regex, no XML dep) and builds a `Route` (id `gpx-<coordinate hash>`, `path_ref` "GPX") GeoJSON and elevation profile (times via `lib/walking-time.ts` and gain/loss via `lib/elevation-gain.ts`, both the backend's rules on 50 m samples; no profile when the file has no elevation)
 3. **POIs**: `services/poi-data.buildTrackPois` loads the POI squares around the track and `lib/poi-linking` links stations, stops, hotels and campings on the device (needs network; import fails otherwise). See `docs/POI_LINKING.md`
 4. **Style**: import screen asks light/dark map style, then `download-store.startSectionDownload(..., importedTrack)`
 5. **Storage**: `offline-storage.saveImportedSectionData` writes `hikes/{id}/sections/{sectionId}/` (incl. `pois.json`), then reuses `downloadSectionTiles` (French grid only)

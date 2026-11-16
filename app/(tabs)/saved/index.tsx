@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import * as DocumentPicker from "expo-document-picker";
 import { useDownloadStore } from "@/stores/download-store";
+import { DownloadStatus } from "@/components/download-status";
 import { lookupRouteById } from "@/services/route-lookup";
 import { formatDistance, formatElevation } from "@/lib/format";
 import { spacing, fontSize, borderRadius } from "@/lib/theme";
@@ -24,6 +25,7 @@ export default function SavedScreen() {
   const navigation = useNavigation();
   const downloads = useDownloadStore((state) => state.downloads);
   const sections = useDownloadStore((state) => state.sections);
+  const sectionDownloads = useDownloadStore((state) => state.sectionDownloads);
   const removeDownload = useDownloadStore((state) => state.removeDownload);
   const removeSection = useDownloadStore((state) => state.removeSection);
 
@@ -266,6 +268,9 @@ export default function SavedScreen() {
                 to: item.section.toKm.toFixed(1),
               })}
             </Text>
+          )}
+          {item.type === "section" && (
+            <DownloadStatus state={sectionDownloads[item.section.sectionId]} />
           )}
           <View style={styles.stats}>
             <Text style={styles.stat}>

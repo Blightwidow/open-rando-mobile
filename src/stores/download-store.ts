@@ -62,6 +62,9 @@ interface DownloadStore {
   isSectionSaved: (routeId: string, fromKm: number, toKm: number) => boolean;
 }
 
+/** Sentinel stored as the error of a download killed by an app restart. */
+export const INTERRUPTED_ERROR = "interrupted";
+
 const defaultState: DownloadState = { status: "idle", progress: 0 };
 
 export const useDownloadStore = create<DownloadStore>()(
@@ -410,6 +413,23 @@ export const useDownloadStore = create<DownloadStore>()(
         sections: state.sections,
         sectionDownloads: state.sectionDownloads,
       }),
+      // A download cannot survive an app restart: whatever was still running is dead
+      onRehydrateStorage: () => (state) => {
+        if (!state) return;
+        const markInterrupted = (states: Record<string, DownloadState>) =>
+          Object.fromEntries(
+            Object.entries(states).map(([id, entry]) => [
+              id,
+              entry.status === "downloading"
+                ? { ...entry, status: "error" as const, error: INTERRUPTED_ERROR }
+                : entry,
+            ]),
+          );
+        useDownloadStore.setState({
+          downloads: markInterrupted(state.downloads),
+          sectionDownloads: markInterrupted(state.sectionDownloads),
+        });
+      },
       migrate: (persistedState, version) => {
         // v4: section downloads are independent from full route downloads;
         // on-disk layout changed. Wipe to force re-download (app not released).
