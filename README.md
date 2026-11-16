@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/banner.svg" alt="TrainRando: hike from station to station, fully offline" width="100%">
+</p>
+
 # TrainRando
 
 Offline field companion for [open-rando](https://rando.dammaretz.fr): hike between train stations on French GR/GRP/PR trails, with maps and routes available without network.
