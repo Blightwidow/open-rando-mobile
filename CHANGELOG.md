@@ -2,6 +2,22 @@
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Release notes of each GitHub release are taken from the matching section.
 
+## [1.1.0] - 2026-11-16
+
+### Added
+
+- Saved hike map: tap or drag the elevation profile to pick a point shown on the map.
+- Saved hike stats in a 2x2 grid, now with duration.
+- Download status on saved hikes (progress, failure reason). Downloads left running at app restart are marked interrupted.
+
+### Changed
+
+- GPX import: walking times and elevation gain/loss follow the backend rules (50 m samples). Re-import a GPX to refresh saved values.
+
+### Fixed
+
+- Settings screen scrolls; developer section no longer hidden by the tab bar.
+
 ## [1.0.0] - 2026-11-10
 
 First release. Android APK attached to the GitHub release.
