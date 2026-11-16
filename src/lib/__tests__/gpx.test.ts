@@ -71,9 +71,10 @@ describe("buildImportedRoute", () => {
     expect(imported.route.distance_km).toBeLessThan(3.2);
   });
 
-  it("sums elevation gain and loss", () => {
-    expect(imported.route.elevation_gain_m).toBe(100);
-    expect(imported.route.elevation_loss_m).toBe(50);
+  it("sums elevation gain and loss on 50 m samples, like the backend", () => {
+    // The 1100 m peak falls between two samples, so the sampled climb is 1 m short
+    expect(imported.route.elevation_gain_m).toBe(99);
+    expect(imported.route.elevation_loss_m).toBe(49);
   });
 
   it("reports min and max elevation", () => {

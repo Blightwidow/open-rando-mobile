@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -18,7 +18,8 @@ import { useGpsStore } from "@/stores/gps-store";
 import { DownloadStatus } from "@/components/download-status";
 import { TrailMap } from "@/components/trail-map";
 import { ElevationChart } from "@/components/elevation-chart";
-import { formatDistance, formatElevation } from "@/lib/format";
+import { formatDistance, formatDuration, formatElevation } from "@/lib/format";
+import { buildTrailModel, interpolateAtKm } from "@/lib/trail-progress";
 import { DifficultyBadge } from "@/components/difficulty-badge";
 import { spacing, fontSize, borderRadius } from "@/lib/theme";
 import { useColors } from "@/hooks/use-colors";
@@ -55,6 +56,27 @@ export default function OfflineRouteDetailScreen() {
   const { request: requestLocationPermission } = useLocationPermission();
   const startFollowing = useGpsStore((state) => state.startFollowing);
   const isTracking = useGpsStore((state) => state.isTracking);
+  const selectTrailPoint = useGpsStore((state) => state.selectTrailPoint);
+  const [selectedKm, setSelectedKm] = useState<number | null>(null);
+
+  // The map marker must not outlive this screen
+  useEffect(() => () => useGpsStore.getState().selectTrailPoint(null), []);
+
+  const totalKm = elevation?.distances_km?.[elevation.distances_km.length - 1] ?? 0;
+  const trailModel = useMemo(() => buildTrailModel(geoJson, totalKm), [geoJson, totalKm]);
+
+  const handleSelectKm = (kilometers: number) => {
+    setSelectedKm(kilometers);
+    const coordinate = trailModel?.coordinateAtChartKm(kilometers);
+    if (coordinate) {
+      selectTrailPoint({ longitude: coordinate[0], latitude: coordinate[1] });
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSelectedKm(null);
+    selectTrailPoint(null);
+  };
 
   const styles = useMemo(
     () =>
@@ -125,7 +147,7 @@ export default function OfflineRouteDetailScreen() {
           backgroundColor: colors.surface,
           borderRadius: borderRadius.medium,
           padding: spacing.small,
-          minWidth: "30%",
+          minWidth: "45%",
           flex: 1,
         },
         statLabel: {
@@ -143,6 +165,27 @@ export default function OfflineRouteDetailScreen() {
         },
         elevationSection: {
           marginTop: spacing.medium,
+        },
+        selectionRow: {
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          minHeight: 24,
+          marginBottom: spacing.small,
+        },
+        selectionLabel: {
+          fontSize: fontSize.small,
+          color: colors.textSecondary,
+        },
+        selectionValueGroup: {
+          flexDirection: "row",
+          alignItems: "center",
+          gap: spacing.small,
+        },
+        selectionValue: {
+          fontSize: fontSize.body,
+          fontWeight: "700",
+          color: "#f97316",
         },
         sectionTitle: {
           fontSize: fontSize.title,
@@ -174,6 +217,18 @@ export default function OfflineRouteDetailScreen() {
       </View>
     );
   }
+
+  // Section profiles keep the full route's clock, so measure from the first point
+  const times = elevation?.times_min ?? [];
+  const totalMinutes = times.length > 0 ? times[times.length - 1]! - times[0]! : null;
+  const selectedMinutes =
+    selectedKm !== null && elevation
+      ? interpolateAtKm(elevation.distances_km, times, selectedKm)
+      : null;
+  const selectedElevation =
+    selectedKm !== null && elevation
+      ? interpolateAtKm(elevation.distances_km, elevation.elevations_m, selectedKm)
+      : null;
 
   const handleDelete = () => {
     if (!route) return;
@@ -240,6 +295,9 @@ export default function OfflineRouteDetailScreen() {
             section ? section.toKm - section.fromKm : route.distance_km,
           )}
         />
+        {totalMinutes !== null && (
+          <StatItem label={t("route.duration")} value={formatDuration(totalMinutes)} />
+        )}
         <StatItem
           label={t("route.elevationGain")}
           value={formatElevation(route.elevation_gain_m)}
@@ -285,7 +343,31 @@ export default function OfflineRouteDetailScreen() {
       {elevation && (
         <View style={styles.elevationSection}>
           <Text style={styles.sectionTitle}>{t("route.elevationProfile")}</Text>
-          <ElevationChart elevation={elevation} />
+          {selectedKm !== null && (
+            <View style={styles.selectionRow}>
+              <Text style={styles.selectionLabel}>{t("active.selectedPoint")}</Text>
+              <View style={styles.selectionValueGroup}>
+                <Text style={styles.selectionValue}>
+                  {formatDistance(selectedKm)}
+                  {selectedElevation !== null &&
+                    ` · ${formatElevation(selectedElevation)}`}
+                  {selectedMinutes !== null && ` · ${formatDuration(selectedMinutes)}`}
+                </Text>
+                <Pressable
+                  onPress={handleClearSelection}
+                  hitSlop={8}
+                  accessibilityLabel={t("active.clearSelection")}
+                >
+                  <Ionicons name="close-circle" size={18} color={colors.textSecondary} />
+                </Pressable>
+              </View>
+            </View>
+          )}
+          <ElevationChart
+            elevation={elevation}
+            selectedKm={selectedKm}
+            onSelectKm={handleSelectKm}
+          />
         </View>
       )}
     </ScrollView>

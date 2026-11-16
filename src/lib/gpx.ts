@@ -1,5 +1,7 @@
 import { computeBboxFromCoords, type Bbox } from "@/lib/geometry";
 import { haversineDistance } from "@/lib/geo";
+import { computeGainLoss } from "@/lib/elevation-gain";
+import { computeWalkingTimesMinutes, resampleEvery50Meters } from "@/lib/walking-time";
 import type { ElevationProfile, Route } from "@/lib/types";
 
 export interface GpxPoint {
@@ -14,11 +16,6 @@ export interface ParsedGpx {
 }
 
 export class GpxParseError extends Error {}
-
-const HIKING_SPEED_KM_PER_HOUR = 4;
-const ASCENT_METERS_PER_HOUR = 600;
-// Ignore elevation jitter below this threshold when summing gain/loss
-const ELEVATION_NOISE_METERS = 3;
 
 function decodeXmlEntities(text: string): string {
   return text
@@ -95,31 +92,6 @@ export function parseGpx(xml: string): ParsedGpx {
   return { name: extractName(xml), points };
 }
 
-interface ElevationTotals {
-  gain: number;
-  loss: number;
-  cumulativeGain: number[];
-}
-
-function sumElevation(elevations: number[]): ElevationTotals {
-  let gain = 0;
-  let loss = 0;
-  let reference = elevations[0];
-  const cumulativeGain: number[] = [];
-  for (const elevation of elevations) {
-    const difference = elevation - reference;
-    if (difference >= ELEVATION_NOISE_METERS) {
-      gain += difference;
-      reference = elevation;
-    } else if (difference <= -ELEVATION_NOISE_METERS) {
-      loss -= difference;
-      reference = elevation;
-    }
-    cumulativeGain.push(gain);
-  }
-  return { gain, loss, cumulativeGain };
-}
-
 export interface ImportedGpxRoute {
   route: Route;
   geoJson: GeoJSON.FeatureCollection;
@@ -177,17 +149,17 @@ export function buildImportedRoute(
   const elevationsMeters = hasElevation
     ? points.map((point) => point.elevationMeters as number)
     : [];
-  const totals: ElevationTotals = hasElevation
-    ? sumElevation(elevationsMeters)
-    : { gain: 0, loss: 0, cumulativeGain: [] };
+  // Same gain/loss rule as the backend, applied to 50 m samples
+  const totals = hasElevation
+    ? computeGainLoss(
+        resampleEvery50Meters(distancesKm, elevationsMeters).elevationsMeters,
+      )
+    : { gain: 0, loss: 0 };
 
-  // Naismith's rule: walking time plus ascent penalty
-  const timesMinutes = distancesKm.map((distanceKm, index) => {
-    const ascentSoFar = totals.cumulativeGain[index] ?? 0;
-    return (
-      (distanceKm / HIKING_SPEED_KM_PER_HOUR + ascentSoFar / ASCENT_METERS_PER_HOUR) * 60
-    );
-  });
+  // Same walking-time rule as the backend, so imported and catalog hikes agree
+  const timesMinutes = hasElevation
+    ? computeWalkingTimesMinutes(distancesKm, elevationsMeters)
+    : [];
 
   const coordinates = points.map((point) => [point.longitude, point.latitude]) as [
     number,
@@ -212,7 +184,7 @@ export function buildImportedRoute(
   const elevation: ElevationProfile = {
     distances_km: hasElevation ? distancesKm : [],
     elevations_m: elevationsMeters,
-    times_min: hasElevation ? timesMinutes : [],
+    times_min: timesMinutes,
     station_positions_km: [],
   };
 
@@ -231,8 +203,8 @@ export function buildImportedRoute(
       train_station_with_rail_service: 0,
     },
     distance_km: totalKm,
-    elevation_gain_m: Math.round(totals.gain),
-    elevation_loss_m: Math.round(totals.loss),
+    elevation_gain_m: totals.gain,
+    elevation_loss_m: totals.loss,
     max_elevation_m: hasElevation ? Math.max(...elevationsMeters) : 0,
     min_elevation_m: hasElevation ? Math.min(...elevationsMeters) : 0,
     difficulty: "moderate",

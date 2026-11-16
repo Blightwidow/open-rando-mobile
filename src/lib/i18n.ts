@@ -24,6 +24,7 @@ const translations: Record<Locale, Record<string, string>> = {
     // Route detail
     "route.notFound": "Randonnée introuvable",
     "route.distance": "Distance",
+    "route.duration": "Durée",
     "route.elevationGain": "Dénivelé ↑",
     "route.elevationLoss": "Dénivelé ↓",
     "route.maxAltitude": "Altitude max",
@@ -200,6 +201,7 @@ const translations: Record<Locale, Record<string, string>> = {
     // Route detail
     "route.notFound": "Route not found",
     "route.distance": "Distance",
+    "route.duration": "Duration",
     "route.elevationGain": "Elevation ↑",
     "route.elevationLoss": "Elevation ↓",
     "route.maxAltitude": "Max altitude",
