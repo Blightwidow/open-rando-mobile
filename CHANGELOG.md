@@ -4,6 +4,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Releas
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-17
+
 ### Added
 
 - Map landmarks on hike maps: water, springs, huts and shelters, peaks and passes, viewpoints, waterfalls, caves, bridges and fords, churches and cemeteries, toilets, cable cars, guideposts and power lines. Each group has a switch in Settings, all on by default.
