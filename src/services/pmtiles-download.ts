@@ -302,3 +302,24 @@ export async function downloadAllForSquares(
     signal,
   );
 }
+
+/** Download one file with the retry, size check and `.part` handling of the tile downloads. */
+export async function downloadSingleFile(
+  entry: PmtilesFileEntry,
+  destFile: File,
+  label: string,
+  onProgress: (fraction: number) => void,
+  signal?: AbortSignal,
+): Promise<void> {
+  ensureOfflineDirectories();
+  let downloadedBytes = 0;
+  await downloadPmtilesFile(
+    { entry, destFile, label },
+    (delta) => {
+      downloadedBytes += delta;
+      onProgress(Math.min(1, downloadedBytes / entry.size));
+    },
+    signal,
+  );
+  onProgress(1);
+}

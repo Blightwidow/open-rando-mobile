@@ -5,13 +5,23 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   View,
 } from "react-native";
 import { useDownloadStore } from "@/stores/download-store";
 import { useSettingsStore } from "@/stores/settings-store";
+import { useOverlayStore } from "@/stores/overlay-store";
+import { OverlayGroupRow } from "@/components/overlay-group-row";
+import { getOverlayGroups } from "@/lib/overlay";
+import {
+  downloadOverlay,
+  getOverlayLocalSizeBytes,
+  isOverlayDownloaded,
+  removeOverlay,
+} from "@/services/overlay-offline";
 import { getStorageUsedBytes } from "@/services/offline-storage";
-import { spacing, fontSize, borderRadius } from "@/lib/theme";
+import { spacing, fontSize, borderRadius, darkColors } from "@/lib/theme";
 import { useColors } from "@/hooks/use-colors";
 import { t } from "@/lib/i18n";
 import { useLocale } from "@/hooks/use-locale";
@@ -28,6 +38,11 @@ export default function SettingsScreen() {
   const setTheme = useSettingsStore((state) => state.setTheme);
   const gpsPollingMode = useSettingsStore((state) => state.gpsPollingMode);
   const setGpsPollingMode = useSettingsStore((state) => state.setGpsPollingMode);
+  const overlayEnabled = useOverlayStore((state) => state.enabled);
+  const setOverlayEnabled = useOverlayStore((state) => state.setEnabled);
+  const overlayVisibleGroups = useOverlayStore((state) => state.visibleGroups);
+  const toggleOverlayGroup = useOverlayStore((state) => state.toggleGroup);
+  const bumpOverlayRevision = useOverlayStore((state) => state.bumpOfflineRevision);
   const downloads = useDownloadStore((state) => state.downloads);
   const removeDownload = useDownloadStore((state) => state.removeDownload);
 
@@ -133,7 +148,16 @@ export default function SettingsScreen() {
     [colors],
   );
 
+  const overlayTheme = colors === darkColors ? "dark" : "light";
+  const overlayGroups = useMemo(() => getOverlayGroups(overlayTheme), [overlayTheme]);
   const [isExportingLog, setIsExportingLog] = useState(false);
+  const [overlaySizeBytes, setOverlaySizeBytes] = useState(0);
+  const [overlayProgress, setOverlayProgress] = useState<number | null>(null);
+  const [overlayFailed, setOverlayFailed] = useState(false);
+
+  useEffect(() => {
+    setOverlaySizeBytes(isOverlayDownloaded() ? getOverlayLocalSizeBytes() : 0);
+  }, []);
   const [storageUsedBytes, setStorageUsedBytes] = useState(0);
 
   useEffect(() => {
@@ -164,6 +188,26 @@ export default function SettingsScreen() {
         },
       },
     ]);
+  };
+
+  const handleOverlayDownload = async () => {
+    setOverlayFailed(false);
+    setOverlayProgress(0);
+    try {
+      await downloadOverlay(setOverlayProgress);
+      setOverlaySizeBytes(getOverlayLocalSizeBytes());
+      bumpOverlayRevision();
+    } catch {
+      setOverlayFailed(true);
+    } finally {
+      setOverlayProgress(null);
+    }
+  };
+
+  const handleOverlayRemove = () => {
+    removeOverlay();
+    setOverlaySizeBytes(0);
+    bumpOverlayRevision();
   };
 
   const handleExportLog = async () => {
@@ -277,6 +321,57 @@ export default function SettingsScreen() {
           ))}
         </View>
         <Text style={styles.description}>{t("settings.gpsPolling.description")}</Text>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>{t("settings.overlay")}</Text>
+        <View style={styles.row}>
+          <Text style={styles.label}>{t("settings.overlay.enabled")}</Text>
+          <Switch value={overlayEnabled} onValueChange={setOverlayEnabled} />
+        </View>
+        {overlayEnabled &&
+          overlayGroups.map((group) => (
+            <OverlayGroupRow
+              key={group.key}
+              group={group}
+              theme={overlayTheme}
+              value={(overlayVisibleGroups ?? []).includes(group.key)}
+              onValueChange={() => toggleOverlayGroup(group.key)}
+              textColor={colors.text}
+              borderColor={colors.border}
+            />
+          ))}
+        <Text style={styles.description}>{t("settings.overlay.description")}</Text>
+        {overlayProgress !== null ? (
+          <Text style={styles.description}>
+            {t("settings.overlay.downloading", {
+              percent: Math.round(overlayProgress * 100),
+            })}
+          </Text>
+        ) : overlaySizeBytes > 0 ? (
+          <>
+            <Text style={styles.description}>
+              {t("settings.overlay.downloaded", { size: formatBytes(overlaySizeBytes) })}
+            </Text>
+            <Pressable style={styles.exportButton} onPress={handleOverlayDownload}>
+              <Text style={styles.exportText}>{t("settings.overlay.update")}</Text>
+            </Pressable>
+            <Pressable style={styles.deleteButton} onPress={handleOverlayRemove}>
+              <Text style={styles.deleteText}>{t("settings.overlay.remove")}</Text>
+            </Pressable>
+          </>
+        ) : (
+          <Pressable style={styles.exportButton} onPress={handleOverlayDownload}>
+            <Text style={styles.exportText}>
+              {t("settings.overlay.download", { size: "≈ 85 MB" })}
+            </Text>
+          </Pressable>
+        )}
+        {overlayFailed && (
+          <Text style={[styles.description, { color: colors.error }]}>
+            {t("settings.overlay.error")}
+          </Text>
+        )}
       </View>
 
       <View style={styles.section}>

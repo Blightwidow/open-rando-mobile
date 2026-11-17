@@ -19,8 +19,15 @@ type Coordinate = [number, number]; // [longitude, latitude]
 export const MAX_STATION_DISTANCE_METERS = 5000;
 export const MAX_BUS_STOP_DISTANCE_METERS = 2000;
 export const MAX_ACCOMMODATION_DISTANCE_METERS = 3000;
+export const MAX_RESUPPLY_DISTANCE_METERS = 1500;
 
-// processors/link.py
+// processors/link.py: kinds linked by plain distance to the trail
+const RADIUS_LINK_DISTANCE_METERS: Partial<Record<PoiType, number>> = {
+  hotel: MAX_ACCOMMODATION_DISTANCE_METERS,
+  camping: MAX_ACCOMMODATION_DISTANCE_METERS,
+  shop: MAX_RESUPPLY_DISTANCE_METERS,
+  eatery: MAX_RESUPPLY_DISTANCE_METERS,
+};
 export const CANDIDATE_BUFFER_DEGREES = 0.07;
 export const CANDIDATE_SIMPLIFY_TOLERANCE_DEGREES = 0.001;
 
@@ -444,12 +451,17 @@ export function linkPoisToTrack(coordinates: Coordinate[], pois: PoiRecord[]): P
     });
   }
 
-  for (const poi of [...ofKind(nearby, "hotel"), ...ofKind(nearby, "camping")]) {
+  for (const poi of [
+    ...ofKind(nearby, "hotel"),
+    ...ofKind(nearby, "camping"),
+    ...ofKind(nearby, "shop"),
+    ...ofKind(nearby, "eatery"),
+  ]) {
     const match = nearestOnTrack(
       track,
       poi.lon,
       poi.lat,
-      MAX_ACCOMMODATION_DISTANCE_METERS,
+      RADIUS_LINK_DISTANCE_METERS[poi.kind] ?? MAX_ACCOMMODATION_DISTANCE_METERS,
     );
     if (!match) continue;
     links.push({

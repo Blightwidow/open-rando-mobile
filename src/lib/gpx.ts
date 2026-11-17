@@ -200,6 +200,8 @@ export function buildImportedRoute(
       bus_stop: 0,
       hotel: 0,
       camping: 0,
+      shop: 0,
+      eatery: 0,
       train_station_with_rail_service: 0,
     },
     distance_km: totalKm,

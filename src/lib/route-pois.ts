@@ -27,6 +27,9 @@ export function joinRoutePois(
       lon: poi.lon,
       poi_type: poi.kind,
       url: poi.url ?? undefined,
+      category: poi.category ?? undefined,
+      opening_hours: poi.opening_hours ?? undefined,
+      phone: poi.phone ?? undefined,
       transit_lines: poi.transit_lines,
       distance_km: link.distance_km ?? undefined,
       distance_to_trail_m: link.distance_to_trail_m,
@@ -42,10 +45,12 @@ export function countPois(pois: PointOfInterest[]): PoiCounts {
     bus_stop: 0,
     hotel: 0,
     camping: 0,
+    shop: 0,
+    eatery: 0,
     train_station_with_rail_service: 0,
   };
   for (const poi of pois) {
-    counts[poi.poi_type] += 1;
+    counts[poi.poi_type] = (counts[poi.poi_type] ?? 0) + 1;
     if (poi.poi_type === "train_station" && poi.rail_service) {
       counts.train_station_with_rail_service += 1;
     }

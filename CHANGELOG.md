@@ -2,6 +2,14 @@
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Release notes of each GitHub release are taken from the matching section.
 
+## [Unreleased]
+
+### Added
+
+- Map landmarks on hike maps: water, springs, huts and shelters, peaks and passes, viewpoints, waterfalls, caves, bridges and fords, churches and cemeteries, toilets, cable cars, guideposts and power lines. Each group has a switch in Settings, all on by default.
+- Landmarks work offline once downloaded from Settings (about 85 MB, shared by all hikes). Place names need a connection for now.
+- Food shops and cafes/restaurants as map points (category, opening hours, phone). Linked within 1.5 km of imported GPX tracks. Re-download saved hikes to get them.
+
 ## [1.1.0] - 2026-11-16
 
 ### Added
